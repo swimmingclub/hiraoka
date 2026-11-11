@@ -1,0 +1,530 @@
+<meta charset="utf-8">
+<title>むすびノート</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-screen app. Header / infinite dotted canvas / ask bar. Cards carry meaning by colour and icon, not prose. */
+:root{
+  --bg:#EEF1F6; --paper:#FFFFFF; --ink:#1C2433; --muted:#566074; --line:#D3D9E4; --dot:#C3CAD8; --accent:#2F6FDE; --on-accent:#FFFFFF;
+  --good:#1F8A4C; --bad:#C9372C;
+  --k-ask:#566074; --k-note:#B87D00; --k-steps:#2B9A6B; --k-chart:#DB5A2B; --k-sim:#C13C8B; --k-quiz:#6C5CE0;
+  --ai1:#0E8F9B; --ai2:#2F6FDE; --ai3:#3D4A6B;
+  --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Noto Sans JP",system-ui,sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;
+  --shadow:0 2px 8px rgba(28,36,51,.10);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10141C; --paper:#1B2130; --ink:#E9EDF5; --muted:#A3AEC2; --line:#343D50; --dot:#2B3445; --accent:#6C9BFF; --on-accent:#0B1220;
+  --good:#4CC27E; --bad:#FF7B6E;
+  --k-ask:#A3AEC2; --k-note:#E0A82E; --k-steps:#4CC295; --k-chart:#F58555; --k-sim:#E96DB5; --k-quiz:#9B8FFF;
+  --ai1:#3CC3CF; --ai2:#6C9BFF; --ai3:#A9B6D6; --shadow:0 2px 8px rgba(0,0,0,.4); color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#10141C; --paper:#1B2130; --ink:#E9EDF5; --muted:#A3AEC2; --line:#343D50; --dot:#2B3445; --accent:#6C9BFF; --on-accent:#0B1220;
+  --good:#4CC27E; --bad:#FF7B6E;
+  --k-ask:#A3AEC2; --k-note:#E0A82E; --k-steps:#4CC295; --k-chart:#F58555; --k-sim:#E96DB5; --k-quiz:#9B8FFF;
+  --ai1:#3CC3CF; --ai2:#6C9BFF; --ai3:#A9B6D6; --shadow:0 2px 8px rgba(0,0,0,.4); color-scheme:dark }
+
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5;overflow:hidden}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#app{height:100%;display:flex;flex-direction:column}
+
+.top{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;background:var(--paper);border-bottom:1px solid var(--line);
+  padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{font-family:var(--display);font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px}
+.brand i{width:26px;height:26px;border-radius:8px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center}
+.board{color:var(--muted);font-size:13px}
+.grow{flex:1 1 0}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;border:1px solid var(--line);font-size:12px;color:var(--muted);white-space:nowrap}
+.chip b{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.chip.live b{background:var(--good)}
+.zoom{display:flex;gap:4px}
+.ib{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);display:grid;place-items:center;padding:0}
+.ib:hover{border-color:var(--accent)}
+
+#vp{flex:1 1 0;min-height:0;position:relative;overflow:hidden;touch-action:none;cursor:grab;
+  background-color:var(--bg);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.3px);background-size:24px 24px}
+#vp.panning{cursor:grabbing}
+#vp.m-link,#vp.m-del{cursor:crosshair}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+#wires{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+#wires .hit{stroke:transparent;stroke-width:18;pointer-events:stroke;fill:none}
+#wires .w{fill:none;stroke-width:2.5;stroke-linecap:round}
+#wires .w.draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .5s ease-out forwards}
+#wires text{font:500 11px var(--body);fill:var(--muted);stroke:var(--bg);stroke-width:5px;paint-order:stroke;text-anchor:middle}
+#vp.m-del #wires .hit:hover + .w{stroke:var(--bad)}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+.cell{--k:var(--k-note);position:absolute;width:250px;background:var(--paper);border:1.5px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none}
+.cell.pop{animation:pop .32s ease-out}
+@keyframes pop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+.cell.from{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+#vp.m-del .cell:hover{border-color:var(--bad)}
+.k-ask{--k:var(--k-ask)} .k-note{--k:var(--k-note)} .k-steps{--k:var(--k-steps)} .k-chart{--k:var(--k-chart)} .k-sim{--k:var(--k-sim);width:290px} .k-quiz{--k:var(--k-quiz)}
+.head{display:flex;align-items:center;gap:8px;padding:8px 10px;background:color-mix(in srgb,var(--k) 15%,var(--paper))}
+.head i{flex:none;width:26px;height:26px;border-radius:8px;background:var(--k);color:var(--paper);display:grid;place-items:center}
+.head span{font-family:var(--display);font-weight:700;font-size:14px;min-width:0;overflow-wrap:anywhere}
+.head em{margin-left:auto;flex:none;font-style:normal;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.head em b{width:8px;height:8px;border-radius:50%;background:var(--a)}
+.body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;overflow-wrap:anywhere}
+.body p{margin:0}
+.body ul,.body ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.body ul li{display:flex;gap:8px;align-items:baseline}
+.body ul li::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--k);transform:translateY(-1px)}
+.body ol{counter-reset:s}
+.body ol li{counter-increment:s;display:flex;gap:8px;align-items:center;padding:6px 8px;border-radius:9px;background:color-mix(in srgb,var(--k) 10%,var(--paper))}
+.body ol li::before{content:counter(s);flex:none;width:20px;height:20px;border-radius:50%;background:var(--k);color:var(--paper);font-size:12px;font-weight:700;display:grid;place-items:center}
+.memo{width:100%;box-sizing:border-box;min-height:64px;resize:vertical;border:1px dashed var(--line);border-radius:9px;background:transparent;padding:6px 8px;cursor:text}
+
+.k-ai{width:172px;border-radius:75px;border-color:var(--a)}
+.k-ai .aibox{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.k-ai .orb{flex:none;width:40px;height:40px;border-radius:50%;background:var(--a);color:var(--paper);display:grid;place-items:center}
+.k-ai .nm{font-family:var(--display);font-weight:700;font-size:13px;line-height:1.3;min-width:0;white-space:nowrap}
+.k-ai .nm small{display:block;font:400 11px var(--body);color:var(--muted)}
+.st{margin-left:auto;flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;color:var(--paper)}
+.st.run{box-sizing:border-box;border:3px solid var(--line);border-top-color:var(--a);animation:spin 1s linear infinite}
+.st.done{background:var(--good)} .st.err{background:var(--bad)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.bar{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12px}
+.bar div{height:14px;border-radius:7px;background:color-mix(in srgb,var(--k) 14%,var(--paper))}
+.bar div b{display:block;height:100%;border-radius:7px;background:var(--k);min-width:4px}
+.bar span:last-child{font-variant-numeric:tabular-nums;font-weight:700}
+.var{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;font-size:12px}
+.var input{grid-column:1/-1;width:100%;accent-color:var(--k);cursor:pointer}
+.var output{font-variant-numeric:tabular-nums;font-weight:700}
+.plot{width:100%;height:110px;border-radius:9px;background:color-mix(in srgb,var(--k) 8%,var(--paper));display:block}
+.out{display:flex;align-items:baseline;justify-content:space-between;font-size:12px;color:var(--muted)}
+.out b{font-family:var(--display);font-size:24px;color:var(--ink);font-variant-numeric:tabular-nums}
+.choice{display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);text-align:left}
+.choice:hover{border-color:var(--k)}
+.choice.ok{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,var(--paper))}
+.choice.ng{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--paper))}
+.choice i{margin-left:auto;display:grid}
+
+.tools{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:12px;display:flex;flex-direction:column;gap:4px;padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.tool{width:56px;min-height:52px;border:0;border-radius:10px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--muted);padding:4px 0}
+.tool:hover{background:var(--bg)}
+.tool[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+#empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;padding:0 24px;text-align:center;color:var(--muted)}
+#empty div{max-width:26em}
+#empty h2{font-family:var(--display);font-size:18px;color:var(--ink);margin:0 0 6px;text-wrap:balance}
+#hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:6px 14px;border-radius:16px;font-size:12px;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+.cursor{position:absolute;left:0;top:0;pointer-events:none;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--paper)}
+.cursor b{width:12px;height:12px;border-radius:50% 50% 50% 0;transform:rotate(90deg);background:var(--c)}
+.cursor span{background:var(--c);padding:1px 6px;border-radius:8px}
+
+.ask{flex:none;background:var(--paper);border-top:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.who{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border:0;margin:0;padding:0;min-width:0}
+.who legend{float:left;font-size:12px;color:var(--muted);margin-right:6px;padding:0;line-height:36px}
+.pick{position:relative}
+.pick input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.pick span{display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:18px;border:1.5px solid var(--line);font-size:13px;color:var(--muted)}
+.pick span b{width:10px;height:10px;border-radius:50%;border:2px solid var(--a);box-sizing:border-box}
+.pick input:checked + span{border-color:var(--a);color:var(--ink);font-weight:700}
+.pick input:checked + span b{background:var(--a)}
+.pick input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+.line{flex:1 1 320px;min-width:0;display:flex;gap:8px}
+.line input{flex:1 1 0;min-width:0;height:44px;border-radius:22px;border:1.5px solid var(--line);background:var(--bg);padding:0 18px;font-size:15px}
+.send{flex:none;height:44px;padding:0 20px;border-radius:22px;border:0;background:var(--accent);color:var(--on-accent);font-family:var(--display);font-weight:700;display:flex;align-items:center;gap:6px}
+.send:disabled{opacity:.5;cursor:default}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media (max-width:640px){
+  .tools{flex-direction:row;top:auto;bottom:10px;left:50%;transform:translateX(-50%)}
+  #hint{bottom:78px}
+  .board{display:none}
+}
+@media (prefers-reduced-motion: reduce){ .cell.pop,#wires .w.draw,.st.run{animation:none} #wires .w.draw{stroke-dashoffset:0} }
+</style>
+
+<div id="app">
+  <header class="top">
+    <div class="brand"><i id="logo"></i>むすびノート</div>
+    <div class="board">3年2組 理科「ふりこ」</div>
+    <div class="grow"></div>
+    <div class="chip" id="peers" hidden><b></b><span></span></div>
+    <div class="chip" id="aimode"><b></b><span>デモ表示</span></div>
+    <div class="zoom">
+      <button class="ib" id="zoom-out" type="button" aria-label="小さくする"></button>
+      <button class="ib" id="zoom-fit" type="button" aria-label="ぜんぶ見る"></button>
+      <button class="ib" id="zoom-in" type="button" aria-label="大きくする"></button>
+    </div>
+  </header>
+
+  <main id="vp">
+    <div id="world"><svg id="wires" aria-hidden="true"></svg></div>
+    <div id="cursors"></div>
+    <div id="empty" hidden><div><h2 id="empty-h">ノートをひらいています</h2><p id="empty-p">少しまってね。</p></div></div>
+    <nav class="tools" aria-label="道具">
+      <button class="tool" id="tool-move" type="button" aria-pressed="true"></button>
+      <button class="tool" id="tool-link" type="button" aria-pressed="false"></button>
+      <button class="tool" id="tool-note" type="button"></button>
+      <button class="tool" id="tool-del" type="button" aria-pressed="false"></button>
+    </nav>
+    <div id="hint" hidden></div>
+  </main>
+
+  <form class="ask" id="ask" autocomplete="off">
+    <fieldset class="who">
+      <legend>だれに聞く</legend>
+      <label class="pick" style="--a:var(--ai1)"><input type="checkbox" id="ai-quick"><span><b></b>はやいAI</span></label>
+      <label class="pick" style="--a:var(--ai2)"><input type="checkbox" id="ai-default" checked><span><b></b>ふつうAI</span></label>
+      <label class="pick" style="--a:var(--ai3)"><input type="checkbox" id="ai-complex"><span><b></b>じっくりAI</span></label>
+    </fieldset>
+    <div class="line">
+      <label class="sr" for="q">AIにたのむこと</label>
+      <input id="q" type="text" maxlength="200" placeholder="例：虹はどうして7色に見えるの？">
+      <button class="send" id="send" type="submit"></button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const vp=$('#vp'), world=$('#world'), wires=$('#wires'), emptyEl=$('#empty'), hint=$('#hint');
+const NS='http://www.w3.org/2000/svg';
+const P={
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+  spark:'<path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z"/>',
+  note:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h5"/>',
+  steps:'<path d="M5 6h4M5 12h4M5 18h4M13 6h6M13 12h6M13 18h6"/>',
+  chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  sim:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  quiz:'<path d="M9 9a3 3 0 1 1 4.5 2.6c-.9.5-1.5 1.2-1.5 2.4"/><path d="M12 18h.01"/><circle cx="12" cy="12" r="9"/>',
+  check:'<path d="m5 12 5 5 9-10"/>', x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  move:'<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>',
+  link:'<path d="M5 19 19 5M10 5h9v9"/>', del:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>', fit:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  send:'<path d="M4 12h15M13 6l6 6-6 6"/>', knot:'<circle cx="7" cy="12" r="3"/><circle cx="17" cy="12" r="3"/><path d="M10 12h4"/>'
+};
+const ic=(n,s=16,w=2)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>';
+const AIS=[{id:'quick',name:'はやいAI',tier:'quick',c:'var(--ai1)'},{id:'default',name:'ふつうAI',tier:'default',c:'var(--ai2)'},{id:'complex',name:'じっくりAI',tier:'complex',c:'var(--ai3)'}];
+const aiOf=id=>AIS.find(a=>a.id===id);
+const KIND={ask:['たのんだこと','user'],note:['メモ','note'],steps:['てじゅん','steps'],chart:['グラフ','chart'],sim:['シミュレーター','sim'],quiz:['クイズ','quiz']};
+const uid=()=>Math.random().toString(36).slice(2,10);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const el=(tag,cls,text)=>{const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e};
+const fmt=n=>!isFinite(n)?'—':Math.abs(n)>=100?n.toFixed(0):Math.abs(n)>=10?n.toFixed(1):n.toFixed(2);
+
+/* static chrome */
+$('#logo').innerHTML=ic('knot',16,2.4);
+$('#zoom-out').innerHTML=ic('minus'); $('#zoom-in').innerHTML=ic('plus'); $('#zoom-fit').innerHTML=ic('fit');
+$('#tool-move').innerHTML=ic('move',20)+'うごかす'; $('#tool-link').innerHTML=ic('link',20)+'つなぐ';
+$('#tool-note').innerHTML=ic('note',20)+'メモ'; $('#tool-del').innerHTML=ic('del',20)+'けす';
+$('#send').innerHTML='たのむ'+ic('send',18,2.4);
+
+/* ---------- example board (shown when the page runs without a shared store) ---------- */
+/*EXAMPLE*/
+const EXAMPLE={cells:[
+ {id:'ex-ask',kind:'ask',title:'たのんだこと',by:'user',x:80,y:250,data:{text:'ふりこの周期は何で決まる？'}},
+ {id:'ex-ai',kind:'ai',title:'ふつうAI',ai:'default',state:'done',by:'ai',x:400,y:262,data:{}},
+ {id:'ex-note',kind:'note',title:'ポイント',ai:'default',by:'ai',x:620,y:120,data:{points:['ひもの長さで決まる','おもりの重さは関係なし','ふれ幅もほぼ関係なし']}},
+ {id:'ex-sim',kind:'sim',title:'ふりこをためす',ai:'default',by:'ai',x:940,y:120,data:{vars:[{key:'L',label:'ひもの長さ',min:0.1,max:2,value:1,unit:'m'},{key:'g',label:'重力',min:1.6,max:25,value:9.8,unit:'m/s²'}],expr:'2*PI*sqrt(L/g)',out:'1往復の時間',outUnit:'秒'}},
+ {id:'ex-chart',kind:'chart',title:'長さと周期',ai:'default',by:'ai',x:620,y:400,data:{unit:'秒',bars:[{label:'25cm',value:1.0},{label:'50cm',value:1.42},{label:'1m',value:2.01},{label:'2m',value:2.84}]}},
+ {id:'ex-quiz',kind:'quiz',title:'たしかめ',ai:'default',by:'ai',x:1300,y:160,data:{q:'ひもを4倍の長さにすると、周期は？',choices:['2倍になる','4倍になる','変わらない'],answer:0}},
+ {id:'ex-memo',kind:'note',title:'メモ',by:'user',x:960,y:560,data:{text:'実験は金曜3時間目。\n1mのひもを用意する。'}}
+],links:[
+ {id:'ex-l1',from:'ex-ask',to:'ex-ai',ai:'default'},{id:'ex-l2',from:'ex-ai',to:'ex-note',ai:'default'},{id:'ex-l3',from:'ex-ai',to:'ex-chart',ai:'default'},
+ {id:'ex-l4',from:'ex-note',to:'ex-sim',ai:'default',label:'ためす'},{id:'ex-l5',from:'ex-sim',to:'ex-quiz',ai:'default',label:'たしかめ'},
+ {id:'ex-l6',from:'ex-memo',to:'ex-sim',label:'実験'}
+]};
+/*END*/
+
+/* ---------- state + store ---------- */
+let cells=new Map(), links=new Map();
+const els=new Map(), seenLinks=new Set();
+let db=null, room=null, sampler=null, loaded=false, firstPaint=true;
+const cam={x:0,y:0,k:1};
+let mode='move', linkFrom=null, drag=null, pan=null, pinch=null;
+const pts=new Map();
+const hosted=!!(window.claude&&window.claude.use);
+
+function dbErr(e){ showHint(e&&e.code==='not_granted'?'このノートは見るだけです':'保存できませんでした。通信をたしかめてください',3500) }
+function saveLocal(){ if(db||hosted) return; try{localStorage.setItem('musubi-note',JSON.stringify({cells:[...cells.values()],links:[...links.values()]}))}catch(e){} }
+function putCell(c){ cells.set(c.id,c); render(); if(db) db.doc('cells/'+c.id).set(c).catch(dbErr); else saveLocal() }
+function patchCell(id,p){ const c=cells.get(id); if(!c) return; Object.assign(c,p); render(); if(db) db.doc('cells/'+id).update(p).catch(dbErr); else saveLocal() }
+function delCell(id){ cells.delete(id); for(const l of [...links.values()]) if(l.from===id||l.to===id) delLink(l.id,true);
+  render(); if(db) db.doc('cells/'+id).delete().catch(dbErr); else saveLocal() }
+function putLink(l){ links.set(l.id,l); drawWires(); if(db) db.doc('links/'+l.id).set(l).catch(dbErr); else saveLocal() }
+function delLink(id,quiet){ links.delete(id); if(!quiet) drawWires(); if(db) db.doc('links/'+id).delete().catch(dbErr); else saveLocal() }
+
+/* ---------- safe formula evaluator (no eval) ---------- */
+const FN=['sin','cos','tan','sqrt','abs','pow','exp','log','min','max','round','floor'];
+function compile(src,keys){
+  if(typeof src!=='string'||!src.trim()||src.length>160) return null;
+  const tk=src.match(/\s*(\d+\.?\d*|\.\d+|[A-Za-z_]\w*|\*\*|[-+*\/%^(),])/g);
+  if(!tk||tk.join('').length!==src.replace(/\s+$/,'').length) return null;
+  const t=tk.map(s=>s.trim()); let i=0;
+  const eat=x=>t[i]===x?(i++,true):false;
+  function expr(){ let a=term(); for(;;){ if(eat('+')){const l=a,b=term(); a=v=>l(v)+b(v)} else if(eat('-')){const l=a,b=term(); a=v=>l(v)-b(v)} else return a } }
+  function term(){ let a=unary(); for(;;){ if(eat('*')){const l=a,b=unary(); a=v=>l(v)*b(v)} else if(eat('/')){const l=a,b=unary(); a=v=>l(v)/b(v)} else if(eat('%')){const l=a,b=unary(); a=v=>l(v)%b(v)} else return a } }
+  function unary(){ if(eat('-')){const a=unary(); return v=>-a(v)} if(eat('+')) return unary(); return power() }
+  function power(){ const a=atom(); if(eat('^')||eat('**')){const b=unary(); return v=>Math.pow(a(v),b(v))} return a }
+  function atom(){ const x=t[i++]; if(x===undefined) throw 0;
+    if(x==='('){ const a=expr(); if(!eat(')')) throw 0; return a }
+    if(/^[\d.]/.test(x)){ const n=parseFloat(x); return ()=>n }
+    if(/^[A-Za-z_]/.test(x)){
+      if(t[i]==='('){ if(!FN.includes(x)) throw 0; i++; const args=[]; if(!eat(')')){ do args.push(expr()); while(eat(',')); if(!eat(')')) throw 0 }
+        const f=Math[x]; return v=>f.apply(null,args.map(a=>a(v))) }
+      if(keys.includes(x)) return v=>v[x];
+      if(x==='PI') return ()=>Math.PI; if(x==='E') return ()=>Math.E; }
+    throw 0 }
+  try{ const f=expr(); if(i!==t.length) return null; return v=>{ const r=f(v); return typeof r==='number'&&isFinite(r)?r:NaN } }catch(e){ return null }
+}
+
+/* ---------- cell rendering ---------- */
+function build(node,c){
+  node.replaceChildren();
+  node.className='cell k-'+c.kind+(node.classList.contains('pop')?' pop':'');
+  const a=c.ai&&aiOf(c.ai); if(a) node.style.setProperty('--a',a.c);
+  if(c.kind==='ai'){
+    const box=el('div','aibox'); const orb=el('div','orb'); orb.innerHTML=ic('spark',20);
+    const nm=el('div','nm',a?a.name:'AI'); nm.appendChild(el('small',null,c.state==='run'?'考え中':c.state==='err'?(c.data&&c.data.msg||'失敗'):'できた'));
+    const st=el('div','st '+(c.state||'done')); st.setAttribute('role','img'); st.setAttribute('aria-label',c.state==='run'?'実行中':c.state==='err'?'失敗':'完了');
+    if(c.state==='done') st.innerHTML=ic('check',12,3.5); if(c.state==='err') st.innerHTML=ic('x',12,3.5);
+    box.append(orb,nm,st); node.appendChild(box); return;
+  }
+  const meta=KIND[c.kind]||KIND.note, d=c.data||{};
+  const head=el('div','head'); const chip=el('i'); chip.innerHTML=ic(meta[1],15,2.2);
+  head.append(chip,el('span',null,c.title||meta[0]));
+  if(a){ const em=el('em'); em.append(el('b'),document.createTextNode(a.name)); head.appendChild(em) }
+  const body=el('div','body'); node.append(head,body);
+  if(c.kind==='ask'){ body.appendChild(el('p',null,d.text||'')) }
+  else if(c.kind==='note'){
+    if(c.by==='user'){ const ta=el('textarea','memo'); ta.id='memo-'+c.id; ta.value=d.text||''; ta.maxLength=300; ta.setAttribute('aria-label','メモ'); ta.placeholder='ここに書く';
+      ta.addEventListener('change',()=>patchCell(c.id,{data:{text:ta.value}})); body.appendChild(ta) }
+    else{ const ul=el('ul'); (d.points||[]).forEach(p=>ul.appendChild(el('li',null,p))); body.appendChild(ul) }
+  }
+  else if(c.kind==='steps'){ const ol=el('ol'); (d.steps||[]).forEach(s=>ol.appendChild(el('li',null,s))); body.appendChild(ol) }
+  else if(c.kind==='chart'){
+    const bars=d.bars||[], mx=Math.max(1e-9,...bars.map(b=>Math.abs(b.value)));
+    bars.forEach(b=>{ const r=el('div','bar'); const tr=el('div'); const f=el('b'); f.style.width=Math.max(2,Math.abs(b.value)/mx*100)+'%'; tr.appendChild(f);
+      r.append(el('span',null,b.label),tr,el('span',null,fmt(b.value)+(d.unit||''))); body.appendChild(r) });
+  }
+  else if(c.kind==='sim'){ buildSim(body,c,d) }
+  else if(c.kind==='quiz'){
+    body.appendChild(el('p',null,d.q||''));
+    (d.choices||[]).forEach((t,i)=>{ const b=el('button','choice',t); b.type='button';
+      b.addEventListener('click',()=>{ body.querySelectorAll('.choice').forEach(x=>{x.classList.remove('ok','ng'); const m=x.querySelector('i'); if(m) m.remove()});
+        const ok=i===d.answer; b.classList.add(ok?'ok':'ng'); const m=el('i'); m.innerHTML=ic(ok?'check':'x',16,3); m.style.color=ok?'var(--good)':'var(--bad)'; b.appendChild(m);
+        b.setAttribute('aria-label',t+(ok?'：せいかい':'：ちがう')) });
+      body.appendChild(b) });
+  }
+}
+function buildSim(body,c,d){
+  const vars=d.vars||[], f=compile(d.expr,vars.map(v=>v.key)); if(!f||!vars.length){ body.appendChild(el('p',null,'この式は動かせません')); return }
+  const vals={}; vars.forEach(v=>vals[v.key]=v.value);
+  const cv=el('canvas','plot'); const outB=el('b');
+  const outs=[];
+  vars.forEach((v,i)=>{ const row=el('div','var'); const id='sim-'+c.id+'-'+i; const lb=el('label',null,v.label); lb.htmlFor=id;
+    const o=el('output',null,fmt(v.value)+' '+v.unit); const r=el('input'); r.type='range'; r.id=id; r.min=v.min; r.max=v.max; r.step=(v.max-v.min)/100; r.value=v.value;
+    r.addEventListener('input',()=>{ vals[v.key]=parseFloat(r.value); o.textContent=fmt(vals[v.key])+' '+v.unit; draw() });
+    row.append(lb,o,r); body.appendChild(row); outs.push(o) });
+  const out=el('div','out'); out.append(el('span',null,d.out||'けっか'),el('span')); out.lastChild.append(outB,document.createTextNode(' '+(d.outUnit||'')));
+  body.append(cv,out);
+  function draw(){
+    outB.textContent=fmt(f(vals));
+    const w=cv.clientWidth||260,h=cv.clientHeight||110,r=Math.min(2,window.devicePixelRatio||1); cv.width=w*r; cv.height=h*r;
+    const g=cv.getContext('2d'); g.scale(r,r); const cs=getComputedStyle(cv); const col=cs.getPropertyValue('--k').trim()||'#888', ink=cs.getPropertyValue('--muted').trim()||'#888';
+    const v0=vars[0], N=60, ys=[]; for(let i=0;i<=N;i++){ const o=Object.assign({},vals); o[v0.key]=v0.min+(v0.max-v0.min)*i/N; ys.push(f(o)) }
+    const ok=ys.filter(isFinite); if(!ok.length) return; let lo=Math.min(0,...ok), hi=Math.max(...ok); if(hi-lo<1e-9) hi=lo+1;
+    const X=i=>10+(w-20)*i/N, Y=y=>h-12-(h-26)*(y-lo)/(hi-lo);
+    g.strokeStyle=ink; g.globalAlpha=.35; g.lineWidth=1; g.beginPath(); g.moveTo(10,h-12); g.lineTo(w-10,h-12); g.stroke(); g.globalAlpha=1;
+    g.strokeStyle=col; g.lineWidth=2.5; g.lineJoin='round'; g.beginPath(); let pen=false;
+    ys.forEach((y,i)=>{ if(!isFinite(y)){pen=false;return} if(pen) g.lineTo(X(i),Y(y)); else g.moveTo(X(i),Y(y)); pen=true }); g.stroke();
+    const ci=(vals[v0.key]-v0.min)/(v0.max-v0.min)*N, cy=f(vals); if(isFinite(cy)){ g.fillStyle=col; g.beginPath(); g.arc(X(ci),Y(cy),6,0,7); g.fill(); g.fillStyle=cs.getPropertyValue('--paper').trim()||'#fff'; g.beginPath(); g.arc(X(ci),Y(cy),2.5,0,7); g.fill() }
+  }
+  requestAnimationFrame(draw);
+}
+
+const ro=new ResizeObserver(()=>queueWires());
+function render(){
+  for(const [id,n] of els) if(!cells.has(id)){ ro.unobserve(n); n.remove(); els.delete(id) }
+  for(const c of cells.values()){
+    let n=els.get(c.id);
+    if(!n){ n=document.createElement('article'); n.className='cell'+(firstPaint?'':' pop'); n.dataset.id=c.id; world.appendChild(n); els.set(c.id,n); ro.observe(n) }
+    const sig=JSON.stringify([c.kind,c.title,c.data,c.state,c.ai,c.by]);
+    if(n._sig!==sig){ const editing=document.activeElement&&n.contains(document.activeElement)&&document.activeElement.tagName==='TEXTAREA'; if(!editing){ n._sig=sig; build(n,c) } }
+    n.style.left=c.x+'px'; n.style.top=c.y+'px';
+    n.classList.toggle('from',linkFrom===c.id);
+  }
+  emptyEl.hidden=cells.size>0;
+  if(loaded&&!cells.size){ $('#empty-h').textContent='まだ何もありません'; $('#empty-p').textContent='下の欄からAIにたのむか、左の「メモ」でカードを置いてみましょう。' }
+  if(cells.size) firstPaint=false;
+  queueWires();
+}
+
+/* ---------- arrows ---------- */
+let wq=false; function queueWires(){ if(wq) return; wq=true; requestAnimationFrame(()=>{wq=false; drawWires()}) }
+function rectOf(id){ const c=cells.get(id), n=els.get(id); if(!c||!n) return null; return {x:c.x,y:c.y,w:n.offsetWidth,h:n.offsetHeight} }
+function edge(r,tx,ty){ const cx=r.x+r.w/2, cy=r.y+r.h/2, dx=tx-cx, dy=ty-cy; if(!dx&&!dy) return [cx,cy];
+  const s=Math.min(dx?(r.w/2+6)/Math.abs(dx):Infinity, dy?(r.h/2+6)/Math.abs(dy):Infinity); return [cx+dx*s,cy+dy*s] }
+function drawWires(){
+  wires.replaceChildren();
+  for(const l of links.values()){
+    const a=rectOf(l.from), b=rectOf(l.to); if(!a||!b) continue;
+    const [x1,y1]=edge(a,b.x+b.w/2,b.y+b.h/2), [x2,y2]=edge(b,a.x+a.w/2,a.y+a.h/2);
+    const len=Math.hypot(x2-x1,y2-y1); if(len<4) continue; const ux=(x2-x1)/len, uy=(y2-y1)/len;
+    const col=l.ai&&aiOf(l.ai)?aiOf(l.ai).c:'var(--ink)';
+    const g=document.createElementNS(NS,'g');
+    const hit=document.createElementNS(NS,'line'); hit.setAttribute('class','hit'); hit.dataset.link=l.id;
+    const w=document.createElementNS(NS,'line'); w.setAttribute('class','w'+(seenLinks.has(l.id)||firstPaint?'':' draw')); w.style.setProperty('--len',len); w.style.stroke=col; if(!l.ai) w.style.strokeDasharray=seenLinks.has(l.id)||firstPaint?'2 7':'';
+    [hit,w].forEach(e=>{ e.setAttribute('x1',x1); e.setAttribute('y1',y1); e.setAttribute('x2',x2-ux*8); e.setAttribute('y2',y2-uy*8) });
+    const tip=document.createElementNS(NS,'path'); tip.setAttribute('d','M'+x2+' '+y2+'L'+(x2-ux*12-uy*6)+' '+(y2-uy*12+ux*6)+'L'+(x2-ux*12+uy*6)+' '+(y2-uy*12-ux*6)+'Z'); tip.style.fill=col;
+    g.append(hit,w,tip);
+    if(l.label){ const t=document.createElementNS(NS,'text'); t.setAttribute('x',(x1+x2)/2); t.setAttribute('y',(y1+y2)/2+4); t.textContent=l.label; g.appendChild(t) }
+    wires.appendChild(g); seenLinks.add(l.id);
+  }
+}
+
+/* ---------- camera ---------- */
+function applyCam(){ world.style.transform='translate('+cam.x+'px,'+cam.y+'px) scale('+cam.k+')'; vp.style.backgroundSize=(24*cam.k)+'px '+(24*cam.k)+'px'; vp.style.backgroundPosition=cam.x+'px '+cam.y+'px'; drawCursors() }
+function zoomAt(px,py,f){ const k=Math.min(2,Math.max(.2,cam.k*f)); const r=vp.getBoundingClientRect(); const x=px-r.left,y=py-r.top; cam.x=x-(x-cam.x)*k/cam.k; cam.y=y-(y-cam.y)*k/cam.k; cam.k=k; applyCam() }
+function bbox(ids){ let b=null; for(const c of cells.values()){ if(ids&&!ids.includes(c.id)) continue; const n=els.get(c.id); const w=n?n.offsetWidth:250,h=n?n.offsetHeight:160;
+  if(!b) b={x:c.x,y:c.y,r:c.x+w,b:c.y+h}; else{ b.x=Math.min(b.x,c.x); b.y=Math.min(b.y,c.y); b.r=Math.max(b.r,c.x+w); b.b=Math.max(b.b,c.y+h) } }
+  return b&&{x:b.x,y:b.y,w:b.r-b.x,h:b.b-b.y} }
+function fitTo(b){ if(!b) return; const W=vp.clientWidth,H=vp.clientHeight, pad=W>640?90:24; cam.k=Math.min(1,Math.max(.2,Math.min((W-pad*2)/b.w,(H-pad*1.4)/b.h)));
+  cam.x=(W-b.w*cam.k)/2-b.x*cam.k+(W>640?24:0); cam.y=(H-b.h*cam.k)/2-b.y*cam.k; applyCam() }
+$('#zoom-in').addEventListener('click',()=>{const r=vp.getBoundingClientRect(); zoomAt(r.left+r.width/2,r.top+r.height/2,1.25)});
+$('#zoom-out').addEventListener('click',()=>{const r=vp.getBoundingClientRect(); zoomAt(r.left+r.width/2,r.top+r.height/2,.8)});
+$('#zoom-fit').addEventListener('click',()=>fitTo(bbox()));
+vp.addEventListener('wheel',e=>{ e.preventDefault(); if(e.ctrlKey||e.metaKey) zoomAt(e.clientX,e.clientY,Math.exp(-e.deltaY*.01)); else{ cam.x-=e.deltaX; cam.y-=e.deltaY; applyCam() } },{passive:false});
+
+/* ---------- tools ---------- */
+let hintT=0; function showHint(t,ms){ clearTimeout(hintT); hint.textContent=t; hint.hidden=!t; if(t&&ms) hintT=setTimeout(()=>{hint.hidden=true},ms) }
+function setMode(m){ mode=m; linkFrom=null; vp.classList.toggle('m-link',m==='link'); vp.classList.toggle('m-del',m==='del');
+  $('#tool-move').setAttribute('aria-pressed',m==='move'); $('#tool-link').setAttribute('aria-pressed',m==='link'); $('#tool-del').setAttribute('aria-pressed',m==='del');
+  showHint(m==='link'?'つなぎたいカードを、じゅんばんに2枚タップ':m==='del'?'けしたいカードか矢印をタップ':''); render() }
+$('#tool-move').addEventListener('click',()=>setMode('move'));
+$('#tool-link').addEventListener('click',()=>setMode(mode==='link'?'move':'link'));
+$('#tool-del').addEventListener('click',()=>setMode(mode==='del'?'move':'del'));
+$('#tool-note').addEventListener('click',()=>{ setMode('move'); const id=uid(); const x=(vp.clientWidth/2-cam.x)/cam.k-125+Math.random()*40, y=(vp.clientHeight/2-cam.y)/cam.k-60+Math.random()*40;
+  putCell({id,kind:'note',title:'メモ',by:'user',x:Math.round(x),y:Math.round(y),data:{text:''}}); const ta=document.getElementById('memo-'+id); if(ta) ta.focus() });
+
+let lastSync=0;
+vp.addEventListener('pointerdown',e=>{
+  if(e.target.closest('.tools')) return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2){ const [a,b]=[...pts.values()]; pinch={d:Math.hypot(a.x-b.x,a.y-b.y)}; drag=null; pan=null; return }
+  const cn=e.target.closest('.cell'), wl=e.target.closest('[data-link]');
+  if(mode==='del'){ if(cn) delCell(cn.dataset.id); else if(wl) delLink(wl.dataset.link); return }
+  if(mode==='link'){ if(cn){ const id=cn.dataset.id; if(!linkFrom){ linkFrom=id; render() } else if(linkFrom!==id){ putLink({id:uid(),from:linkFrom,to:id}); linkFrom=null; render() } } else { linkFrom=null; render() } return }
+  if(cn){ if(e.target.closest('input,textarea,button')) return; const c=cells.get(cn.dataset.id); if(!c) return; drag={id:c.id,sx:e.clientX,sy:e.clientY,ox:c.x,oy:c.y}; cn.style.zIndex=5 }
+  else { pan={sx:e.clientX,sy:e.clientY,ox:cam.x,oy:cam.y}; vp.classList.add('panning') }
+  try{ vp.setPointerCapture(e.pointerId) }catch(_){}
+});
+vp.addEventListener('pointermove',e=>{
+  if(pts.has(e.pointerId)) pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch&&pts.size===2){ const [a,b]=[...pts.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y); if(pinch.d>0) zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch.d); pinch.d=d; return }
+  if(drag){ const c=cells.get(drag.id); if(!c) return; c.x=Math.round(drag.ox+(e.clientX-drag.sx)/cam.k); c.y=Math.round(drag.oy+(e.clientY-drag.sy)/cam.k);
+    const n=els.get(c.id); n.style.left=c.x+'px'; n.style.top=c.y+'px'; queueWires();
+    const now=Date.now(); if(db&&now-lastSync>180){ lastSync=now; db.doc('cells/'+c.id).update({x:c.x,y:c.y}).catch(()=>{}) } }
+  else if(pan){ cam.x=pan.ox+e.clientX-pan.sx; cam.y=pan.oy+e.clientY-pan.sy; applyCam() }
+  sendCursor(e);
+});
+function endPtr(e){ pts.delete(e.pointerId); if(pts.size<2) pinch=null;
+  if(drag){ const c=cells.get(drag.id), n=els.get(drag.id); if(n) n.style.zIndex=''; const d=drag; drag=null; if(c&&(c.x!==d.ox||c.y!==d.oy)) patchCell(c.id,{x:c.x,y:c.y}) }
+  pan=null; vp.classList.remove('panning') }
+vp.addEventListener('pointerup',endPtr); vp.addEventListener('pointercancel',endPtr);
+
+/* ---------- people on the board (live cursors) ---------- */
+let peerList=[], lastCur=0;
+const hue=s=>{ let h=0; for(const ch of String(s)) h=(h*31+ch.charCodeAt(0))%360; return 'hsl('+h+' 62% 42%)' };
+function sendCursor(e){ if(!room) return; const now=Date.now(); if(now-lastCur<90) return; lastCur=now; const r=vp.getBoundingClientRect();
+  room.presence({x:Math.round((e.clientX-r.left-cam.x)/cam.k),y:Math.round((e.clientY-r.top-cam.y)/cam.k)}).catch(()=>{}) }
+function drawCursors(){ const box=$('#cursors'); box.replaceChildren();
+  peerList.forEach((p,i)=>{ if(p.isMe||!p.presence||typeof p.presence.x!=='number'||typeof p.presence.y!=='number') return;
+    const c=el('div','cursor'); c.style.setProperty('--c',hue(p.peer)); c.style.transform='translate('+(p.presence.x*cam.k+cam.x)+'px,'+(p.presence.y*cam.k+cam.y)+'px)';
+    c.append(el('b'),el('span',null,p.kind==='agent'?'AI':'なかま')); box.appendChild(c) });
+  const n=peerList.length; const pe=$('#peers'); pe.hidden=!room; pe.classList.toggle('live',n>1); pe.querySelector('span').textContent=n>1?'いま'+n+'人で見ています':'共有ノート' }
+
+/* ---------- asking the AIs ---------- */
+const ask=text=>'あなたは学校向けノートアプリの中のAIです。児童・生徒の質問に、長い文章ではなく「カード」で答えます。\n'
++'JSONだけを返してください。形式: {"cells":[...],"links":[{"from":"id","to":"id","label":"4字以内"}]}\n'
++'カードの種類:\n'
++'- {"id":"a","kind":"note","title":"..","points":[".."]} 要点。pointsは3つまで、各20字以内\n'
++'- {"id":"b","kind":"steps","title":"..","steps":[".."]} 手順や流れ。5つまで、各16字以内\n'
++'- {"id":"c","kind":"chart","title":"..","unit":"..","bars":[{"label":"..","value":1}]} 棒グラフ。数で比べられるとき。2〜5本\n'
++'- {"id":"d","kind":"sim","title":"..","vars":[{"key":"L","label":"..","min":0,"max":1,"value":0.5,"unit":".."}],"expr":"..","out":"..","outUnit":".."} つまみを動かすシミュレーター。数式で表せる関係があるとき。varsは3つまで。keyは英字。exprに使えるのはvarsのkey、数字、+ - * / ^ ( )、sin cos tan sqrt abs pow exp log min max PI だけ\n'
++'- {"id":"e","kind":"quiz","title":"..","q":"..","choices":["..","..",".."],"answer":0} たしかめクイズ。answerは正解の番号(0から)\n'
++'きまり: カードは3〜5枚。titleは12字以内。やさしい日本語。数値は正確に。linksは考える順番を表す矢印で、fromとtoはカードのid。\n'
++'質問: '+text;
+const arr=v=>Array.isArray(v)?v:[], S=(v,n)=>String(v==null?'':v).slice(0,n);
+function clean(r){ const out=[];
+  for(const c of arr(r&&r.cells).slice(0,5)){ if(!c||typeof c!=='object') continue; let d=null;
+    if(c.kind==='note'){ const p=arr(c.points).slice(0,4).map(x=>S(x,40)).filter(Boolean); if(p.length) d={points:p} }
+    else if(c.kind==='steps'){ const s=arr(c.steps).slice(0,6).map(x=>S(x,32)).filter(Boolean); if(s.length) d={steps:s} }
+    else if(c.kind==='chart'){ const b=arr(c.bars).slice(0,6).map(x=>({label:S(x&&x.label,12),value:Number(x&&x.value)})).filter(x=>isFinite(x.value)); if(b.length>1) d={bars:b,unit:S(c.unit,6)} }
+    else if(c.kind==='sim'){ const vs=arr(c.vars).slice(0,3).map(v=>({key:S(v&&v.key,8),label:S(v&&v.label,14),min:Number(v&&v.min),max:Number(v&&v.max),value:Number(v&&v.value),unit:S(v&&v.unit,6)}))
+        .filter(v=>/^[A-Za-z_]\w*$/.test(v.key)&&isFinite(v.min)&&isFinite(v.max)&&v.max>v.min);
+      vs.forEach(v=>{ v.value=isFinite(v.value)?Math.min(v.max,Math.max(v.min,v.value)):(v.min+v.max)/2 });
+      const ex=S(c.expr,160); if(vs.length&&compile(ex,vs.map(v=>v.key))) d={vars:vs,expr:ex,out:S(c.out,14),outUnit:S(c.outUnit,6)} }
+    else if(c.kind==='quiz'){ const ch=arr(c.choices).slice(0,4).map(x=>S(x,28)).filter(Boolean), an=Number(c.answer); if(ch.length>1&&Number.isInteger(an)&&an>=0&&an<ch.length) d={q:S(c.q,70),choices:ch,answer:an} }
+    if(d) out.push({id:S(c.id,10),kind:c.kind,title:S(c.title,20)||KIND[c.kind][0],data:d}) }
+  return {cells:out,links:arr(r&&r.links).slice(0,8).map(l=>({from:S(l&&l.from,10),to:S(l&&l.to,10),label:S(l&&l.label,8)}))} }
+async function demoAnswer(a){ await sleep(a.id==='quick'?700:a.id==='default'?1400:2300);
+  const base=[{id:'n',kind:'note',title:'これは見本です',points:['本物のAIにつなぐと','ここに答えのカードが出ます']},
+    {id:'s',kind:'sim',title:'ふりこをためす',vars:[{key:'L',label:'ひもの長さ',min:.1,max:2,value:1,unit:'m'}],expr:'2*PI*sqrt(L/9.8)',out:'1往復の時間',outUnit:'秒'},
+    {id:'c',kind:'chart',title:'長さと周期',unit:'秒',bars:[{label:'25cm',value:1},{label:'1m',value:2.01},{label:'2m',value:2.84}]},
+    {id:'q',kind:'quiz',title:'たしかめ',q:'ひもを長くすると周期は？',choices:['長くなる','短くなる','変わらない'],answer:0}];
+  const n=a.id==='quick'?2:a.id==='default'?3:4; return {cells:base.slice(0,n),links:[{from:'n',to:'s',label:'ためす'},{from:'s',to:'c'},{from:'c',to:'q'}]} }
+const LANE=470;
+async function runOne(a,text,askCell,x,y){
+  const node={id:uid(),kind:'ai',title:a.name,ai:a.id,state:'run',by:'ai',x:x,y:y+40,data:{}};
+  putCell(node); putLink({id:uid(),from:askCell.id,to:node.id,ai:a.id});
+  let raw;
+  try{ if(sampler){ try{ raw=await sampler.json(ask(text),{modelTier:a.tier,cache:false}) }
+      catch(e){ if(e&&['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed','session_expired'].includes(e.code)){ sampler=null; setAiChip(); raw=await demoAnswer(a) } else throw e } }
+    else raw=await demoAnswer(a) }
+  catch(e){ patchCell(node.id,{state:'err',data:{msg:e&&e.code==='rate_limited'?'少しまってね':e&&e.code==='refused'?'答えられません':'失敗'}}); return }
+  const res=clean(raw); if(!res.cells.length){ patchCell(node.id,{state:'err',data:{msg:'カードなし'}}); return }
+  const map={}; const made=[];
+  for(let j=0;j<res.cells.length;j++){ const c=res.cells[j], id=uid(); map[c.id]=id; made.push(id);
+    putCell({id,kind:c.kind,title:c.title,data:c.data,ai:a.id,by:'ai',x:x+220+j*320,y:y}); await sleep(280) }
+  const hasIn=new Set();
+  for(const l of res.links){ const f=map[l.from],t=map[l.to]; if(f&&t&&f!==t){ hasIn.add(t); putLink({id:uid(),from:f,to:t,ai:a.id,label:l.label||''}); await sleep(120) } }
+  for(const id of made) if(!hasIn.has(id)) putLink({id:uid(),from:node.id,to:id,ai:a.id});
+  patchCell(node.id,{state:'done'});
+}
+let busy=false;
+$('#ask').addEventListener('submit',async e=>{
+  e.preventDefault(); if(busy) return; const q=$('#q'), text=q.value.trim(); const picks=AIS.filter(a=>$('#ai-'+a.id).checked);
+  if(!text){ showHint('たのみたいことを書いてね',2500); q.focus(); return } if(!picks.length){ showHint('聞くAIを1つ以上えらんでね',2500); return }
+  busy=true; $('#send').disabled=true; setMode('move'); q.value='';
+  const b=bbox(), x0=b?b.x:80, y0=b?b.y+b.h+140:80;
+  const askCell={id:uid(),kind:'ask',title:'たのんだこと',by:'user',x:x0,y:Math.round(y0+(picks.length-1)*LANE/2+30),data:{text}};
+  putCell(askCell);
+  fitTo({x:x0,y:y0-20,w:330+200+3*320+290,h:Math.max(420,picks.length*LANE-60)});
+  await Promise.allSettled(picks.map((a,i)=>runOne(a,text,askCell,x0+330,y0+i*LANE)));
+  busy=false; $('#send').disabled=false;
+});
+function setAiChip(){ const c=$('#aimode'); c.classList.toggle('live',!!sampler); c.querySelector('span').textContent=sampler?'Claudeが答えます':'デモ表示' }
+
+/* ---------- boot ---------- */
+function loadLocal(){ let d=null; try{ d=JSON.parse(localStorage.getItem('musubi-note')||'null') }catch(e){}
+  if(!d||!Array.isArray(d.cells)||!d.cells.length) d=EXAMPLE;
+  cells=new Map(d.cells.map(c=>[c.id,c])); links=new Map((d.links||[]).map(l=>[l.id,l])); loaded=true; render(); requestAnimationFrame(()=>fitTo(bbox())) }
+applyCam(); setAiChip();
+if(!hosted){ loadLocal() }
+else{
+  emptyEl.hidden=false;
+  let fitted=false;
+  window.claude.use('db').then(d=>{ if(!d){ loadLocal(); return } db=d;
+    db.collection('cells').onSnapshot(s=>{ const m=new Map(); s.docs.forEach(x=>{ const v=x.data(); if(v&&typeof v.id==='string'&&typeof v.x==='number'&&typeof v.y==='number'&&v.kind) m.set(v.id,v) });
+      if(drag&&cells.has(drag.id)&&m.has(drag.id)){ const c=cells.get(drag.id); m.get(drag.id).x=c.x; m.get(drag.id).y=c.y }
+      cells=m; loaded=true; render(); if(!fitted&&cells.size){ fitted=true; requestAnimationFrame(()=>fitTo(bbox())) } },dbErr);
+    db.collection('links').onSnapshot(s=>{ const m=new Map(); s.docs.forEach(x=>{ const v=x.data(); if(v&&typeof v.id==='string'&&v.from&&v.to) m.set(v.id,v) }); links=m; queueWires() },dbErr);
+  });
+  window.claude.use('room').then(r=>{ if(!r) return; room=r; peerList=r.peers(); drawCursors(); r.onPeers(ch=>{ peerList=ch.peers; drawCursors() }) });
+  window.claude.use('sample').then(s=>{ sampler=s||null; setAiChip() });
+}
+window.addEventListener('resize',()=>queueWires());
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(queueWires);
+})();
+</script>
