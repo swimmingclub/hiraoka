@@ -3,87 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>30秒で解説！接続詞</title>
-<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-jp/500.css">
-<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-jp/700.css">
-<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-jp/900.css">
-<link rel="stylesheet" href="node_modules/@fontsource/inter/700.css">
-<link rel="stylesheet" href="node_modules/@fontsource/inter/900.css">
-<link rel="stylesheet" href="node_modules/@fontsource/jetbrains-mono/500.css">
-<link rel="stylesheet" href="node_modules/@fontsource/jetbrains-mono/700.css">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{background:#000}
-#stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#000;
-  font-family:"Inter","Noto Sans JP",sans-serif;font-weight:900;line-height:1.15}
-.mono{font-family:"JetBrains Mono","Noto Sans JP",monospace;font-weight:700;letter-spacing:.08em}
-.scene{position:absolute;inset:0;--fg:#fff;--bg:#000;--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.07);
-  color:var(--fg);background-color:var(--bg);
-  background-image:linear-gradient(var(--line) 2px,transparent 2px),linear-gradient(90deg,var(--line) 2px,transparent 2px);
-  background-size:108px 108px;padding:250px 70px 0}
-.scene.w{--fg:#000;--bg:#fff;--dim:rgba(0,0,0,.6);--line:rgba(0,0,0,.07)}
-.ghost{position:absolute;right:-30px;bottom:120px;font-size:620px;line-height:1;color:transparent;
-  -webkit-text-stroke:3px var(--line);letter-spacing:-.04em}
-.scene.w .ghost{-webkit-text-stroke-color:rgba(0,0,0,.1)} .scene:not(.w) .ghost{-webkit-text-stroke-color:rgba(255,255,255,.13)}
-[data-fx]{will-change:transform,opacity}
-.row{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
-.chap{font-size:34px;color:var(--dim)}
-.h1{font-size:128px;letter-spacing:-.02em;margin-top:14px}
-.sub{font-size:48px;font-weight:700;margin-top:22px}
-.rule{height:6px;background:var(--fg);margin:36px 0 44px;transform-origin:left}
-.chip{font-size:58px;padding:10px 30px 14px;border:4px solid var(--fg);border-radius:10px}
-.chip.fill{background:var(--fg);color:var(--bg)}
-.tag{font-size:34px;background:var(--fg);color:var(--bg);padding:8px 20px;border-radius:6px;font-weight:900}
-.ex{margin-top:54px;border-left:10px solid var(--fg);padding:6px 0 6px 34px}
-.ex .en{font-size:60px;letter-spacing:-.01em}
-.ex .ja{font-size:38px;font-weight:700;color:var(--dim);margin-top:14px}
-.hl{position:relative;display:inline-block;z-index:0;padding:0 .08em}
-.hl i{position:absolute;inset:-2px -6px;background:var(--fg);z-index:-1;transform-origin:left}
-.point{margin-top:50px;border:4px solid var(--fg);padding:30px 34px 34px;border-radius:14px}
-.point .t{font-size:46px;margin-top:18px;line-height:1.3}
-.point .s{font-size:36px;font-weight:700;margin-top:12px;color:var(--dim)}
-.x{text-decoration:line-through;text-decoration-thickness:5px;opacity:.55}
-/* scene 1 */
-#s1{padding-top:470px}
-#s1 .big{font-size:200px;letter-spacing:-.03em;line-height:1.08}
-#s1 .huge{font-size:290px;letter-spacing:-.02em;line-height:1.1;margin-top:30px}
-#s1 .en{font-size:46px;margin-top:60px;color:var(--dim)}
-/* scene 2 */
-.link{display:flex;align-items:center;margin-top:90px}
-.box{width:270px;height:200px;border:5px solid var(--fg);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:56px}
-.wire{flex:1;height:8px;background:var(--fg);transform-origin:left}
-.node{font-size:50px;background:var(--fg);color:var(--bg);padding:26px 26px;border-radius:14px}
-.lead{font-size:76px;margin-top:90px;line-height:1.3}
-.three{margin-top:70px}
-.three .n{display:flex;align-items:baseline;gap:26px;font-size:70px;margin-top:22px}
-.three .n span{font-size:40px;color:var(--dim)}
-/* grid */
-.grid{display:grid;grid-template-columns:170px 1fr;row-gap:26px;align-items:center}
-.grid .k{font-size:44px;background:var(--fg);color:var(--bg);padding:12px 0 16px;text-align:center;border-radius:8px}
-.grid .v{font-size:52px;padding-left:34px;letter-spacing:-.01em}
-.grid .v em{font-style:normal;color:var(--dim);font-weight:700;padding:0 6px}
-/* pairs */
-.pair{margin-top:34px}
-.pair .en{font-size:68px;letter-spacing:-.02em}
-.pair .en b{font-weight:900;color:var(--bg);background:var(--fg);padding:0 14px 4px;border-radius:8px;margin:0 4px;font-size:.8em;vertical-align:.08em}
-.pair .ja{font-size:36px;font-weight:700;color:var(--dim);margin-top:8px}
-/* summary */
-.sum{margin-top:44px;border-top:5px solid var(--fg);padding-top:34px}
-.sum .a{font-size:84px}
-.sum .b{font-size:42px;font-weight:700;margin-top:10px}
-.sum .c{font-size:38px;color:var(--dim);margin-top:10px}
-#s7{display:flex;flex-direction:column;justify-content:center;padding-top:0;padding-bottom:160px}
-#s7 .f1{white-space:nowrap;font-size:168px;line-height:1.12;letter-spacing:-.02em}
-#s7 .f2{font-size:46px;margin-top:70px;color:var(--dim)}
-/* HUD */
-#hud{position:absolute;inset:0;color:#fff;mix-blend-mode:difference;pointer-events:none}
-#bar{position:absolute;left:0;top:0;height:14px;width:100%;background:#fff;transform-origin:left;transform:scaleX(0)}
-#hud .l{position:absolute;left:70px;top:120px;font-size:30px}
-#hud .r{position:absolute;right:70px;top:104px;font-size:56px}
-#hud .foot{position:absolute;left:70px;right:70px;bottom:110px;font-size:26px;display:flex;justify-content:space-between;opacity:.7}
-.cn{position:absolute;width:50px;height:50px;border:5px solid #fff}
-.cn.a{left:36px;top:60px;border-right:0;border-bottom:0}.cn.b{right:36px;top:60px;border-left:0;border-bottom:0}
-.cn.c{left:36px;bottom:60px;border-right:0;border-top:0}.cn.d{right:36px;bottom:60px;border-left:0;border-top:0}
-</style>
+<link rel="stylesheet" href="../shared/style.css">
 </head>
 <body>
 <div id="stage">
@@ -220,44 +140,7 @@ html,body{background:#000}
 </div>
 </div>
 
-<script>
-const EASE='cubic-bezier(0.16,1,0.3,1)';
-const FX={
-  up:[[{opacity:0,transform:'translateY(80px)'},{opacity:1,transform:'none'}],550],
-  pop:[[{opacity:0,transform:'scale(1.7)'},{opacity:1,transform:'none'}],380],
-  left:[[{opacity:0,transform:'translateX(-140px)'},{opacity:1,transform:'none'}],550],
-  draw:[[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],600],
-  fade:[[{opacity:0},{opacity:1}],400],
-};
-const anims=[];
-const add=(el,kf,dur,t,ease=EASE)=>{const a=el.animate(kf,{duration:dur,delay:t*1000,fill:'both',easing:ease});a.pause();anims.push(a);};
-const scenes=[...document.querySelectorAll('.scene')];
-scenes.forEach((s,i)=>{
-  const t=+s.dataset.t, end=i+1<scenes.length?+scenes[i+1].dataset.t+0.5:30;
-  if(i>0){
-    const from=i%2?'inset(0 0 100% 0)':'inset(100% 0 0 0)';
-    add(s,[{clipPath:from},{clipPath:'inset(0 0 0 0)'}],450,t);
-  }
-  const g=s.querySelector('.ghost');
-  if(g) add(g,[{transform:'translate(120px,60px)'},{transform:'translate(-60px,-40px)'}],(end-t)*1000,t,'linear');
-});
-document.querySelectorAll('[data-fx]').forEach(el=>{const [kf,d]=FX[el.dataset.fx];add(el,kf,d,+el.dataset.t);});
-document.querySelectorAll('.hl').forEach(el=>{
-  const cs=getComputedStyle(el), fg=cs.getPropertyValue('--fg').trim(), bg=cs.getPropertyValue('--bg').trim();
-  const i=document.createElement('i');el.prepend(i);
-  add(i,FX.draw[0],420,+el.dataset.t);
-  add(el,[{color:fg},{color:bg}],200,+el.dataset.t+0.05,'linear');
-});
-const CH=[[0,'INTRO'],[3,'00 WHAT'],[6.5,'01 COORDINATING'],[12.5,'02 SUBORDINATING'],[19.5,'03 CORRELATIVE'],[25,'SUMMARY'],[28,'END']];
-const p=n=>String(n).padStart(2,'0');
-window.seek=t=>{
-  anims.forEach(a=>a.currentTime=t*1000);
-  bar.style.transform=`scaleX(${Math.min(1,t/30)})`;
-  cd.textContent='00:'+p(Math.max(0,Math.ceil(30-t)));
-  tc.textContent=`00:${p(Math.floor(t))}:${p(Math.floor((t%1)*30))}`;
-  ch.textContent=CH.filter(c=>c[0]<=t).pop()[1];
-};
-seek(0);
-</script>
+<script>window.VIDEO={dur:30,chapters:[[0,'INTRO'],[3,'00 WHAT'],[6.5,'01 COORDINATING'],[12.5,'02 SUBORDINATING'],[19.5,'03 CORRELATIVE'],[25,'SUMMARY'],[28,'END']]};</script>
+<script src="../shared/timeline.js"></script>
 </body>
 </html>

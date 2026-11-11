@@ -1,20 +1,22 @@
-// Renders index.html frame by frame. Usage: node render.js <outDir> [t1 t2 ...]
+// Renders <videoDir>/index.html frame by frame.
+// Usage: node render.js <videoDir> <outDir> <durationSec> [t1 t2 ...]
 // With extra args, only the given timestamps (seconds) are captured as previews.
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-const FPS = 30, DUR = 30, WORKERS = 4;
-const out = process.argv[2];
-const stills = process.argv.slice(3).map(Number);
+const FPS = 30, WORKERS = 4;
+const [dir, out, durArg, ...rest] = process.argv.slice(2);
+const DUR = Number(durArg);
+const stills = rest.map(Number);
 fs.mkdirSync(out, { recursive: true });
 
 (async () => {
   const browser = await chromium.launch();
   const open = async () => {
     const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
-    await page.goto('file://' + path.join(__dirname, 'index.html'));
-    await page.evaluate(async () => { seek(29.9); await document.fonts.ready; });
+    await page.goto('file://' + path.resolve(dir, 'index.html'));
+    await page.evaluate(async t => { seek(t); await document.fonts.ready; }, DUR - 0.1);
     await page.waitForTimeout(500);
     await page.evaluate(() => document.fonts.ready);
     return page;

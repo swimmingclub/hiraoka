@@ -1,11 +1,20 @@
-"""Synthesizes an original 30s minimal beat (120 BPM) for the video. Usage: python3 audio.py out.wav"""
+"""Synthesizes an original minimal beat (120 BPM) for a video.
+
+Usage: python3 audio.py out.wav [duration intro_end beat_stop cuts blips]
+(cuts and blips are comma-separated times in seconds; defaults fit the 30s conjunction video)
+"""
 import sys, wave
 import numpy as np
 
-SR, DUR = 44100, 30.0
+A = sys.argv[2:]
+SR = 44100
+DUR = float(A[0]) if A else 30.0
+INTRO_END = float(A[1]) if A else 3.0
+STOP = float(A[2]) if A else 28.0
 rng = np.random.default_rng(7)
 mix = np.zeros(int(SR * DUR))
-CUTS = [3.0, 6.5, 12.5, 19.5, 25.0, 28.0]
+CUTS = [float(x) for x in A[3].split(",")] if A else [3.0, 6.5, 12.5, 19.5, 25.0, 28.0]
+BLIPS = [float(x) for x in A[4].split(",")] if A else [1.5, 5.1, 7.3, 9.3, 10.8, 11.2, 13.3, 16.1, 17.6, 20.3, 23.5, 28.85]
 
 
 def put(sig, t, gain=1.0):
@@ -58,9 +67,9 @@ NOTES = [55.0, 55.0, 65.41, 49.0]  # A1 A1 C2 G1, one per bar
 beat = 0.5
 for b in range(int(DUR / beat)):
     t = b * beat
-    if t >= 28.0:
+    if t >= STOP:
         break
-    full = t >= 3.0
+    full = t >= INTRO_END
     if full or b % 2 == 0:
         put(K, t, 0.9)
     put(H, t + 0.25, 0.22 if full else 0.12)
@@ -75,7 +84,7 @@ for c in CUTS:
     put(R, c - 0.5, 0.25)
     put(I, c, 0.9)
 # UI blips where key words get highlighted
-for t in [1.5, 5.1, 7.3, 9.3, 10.8, 11.2, 13.3, 16.1, 17.6, 20.3, 23.5, 28.85]:
+for t in BLIPS:
     put(blip(1760), t, 0.18)
 
 fade = np.ones(len(mix))
