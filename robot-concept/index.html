@@ -183,17 +183,33 @@ tr:last-child td { border-bottom: 0; }
 .warn ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 code { font-family: var(--f-mono); font-size: .92em; }
 a { color: var(--steel); }
+
+/* ---------- plans ---------- */
+.plans { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.plans a { font: 500 13px/1 var(--f-body); color: var(--ink); text-decoration: none; padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--sheet); }
+.plans a:hover, .plans a:focus-visible { border-color: var(--accent); outline: none; }
+.plan { scroll-margin-top: 16px; }
+h2 .tag { white-space: nowrap; }
+.views.one { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; gap: 20px; }
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; }
+.notes.stack { grid-template-columns: 1fr; gap: 12px; }
+.notes p { font-size: 14px; line-height: 1.7; }
+.nk { font: 600 12px var(--f-mono); color: var(--steel); letter-spacing: .06em; margin-bottom: 2px; }
+@media (max-width: 640px) { .views.one, .notes { grid-template-columns: 1fr; } }
 </style>
 
 <div class="wrap">
   <header>
     <div class="eyebrow">Concept sheet · rev.0 · 2026-11-17</div>
     <h1><span class="jp">変形ボックスロボット</span> <span style="color:var(--accent)">BOX-TRANSFORMER</span></h1>
-    <p class="lede">普段はただの箱。モードを切り替えると、側面から4つの車輪ポッドが張り出し、天板からロボットアームが立ち上がる。PTK7465 PLUS×8のアーム、操舵とキャンバー付きの高速ホイール、正面カメラ、制御はKakip。下のボタンで変形を確認できます。</p>
+    <p class="lede">普段はただの箱。モードを切り替えると足回りとロボットアームが展開する。PTK7465 PLUS×8のアーム、正面カメラ、制御はKakip。足回りは5案を用意し、どれも各図のボタンで変形を確認できます。</p>
+    <nav class="plans" aria-label="案の一覧"><a href="#plan1">案1 4輪ポッド</a><a href="#plan2">案2 折り畳み4脚</a><a href="#plan3">案3 フリッパークローラ</a><a href="#plan4">案4 変形ホイール</a><a href="#plan5">案5 脚＋車輪</a><a href="#compare">比較</a></nav>
   </header>
 
   <!-- ===== Interactive figure ===== -->
-  <section class="stage" id="stage" data-mode="work" aria-label="完成予想図">
+  <section id="plan1" class="plan">
+  <h2><span class="tag">案1</span>4輪ポッド（基本案）</h2>
+  <div class="stage" id="stage" data-mode="work" aria-label="案1の完成予想図">
     <div class="controls">
       <div class="seg" role="group" aria-label="モード切替">
         <button type="button" id="m-stowed" data-m="stowed" aria-pressed="false">収納</button>
@@ -345,6 +361,7 @@ a { color: var(--steel); }
       <div class="k" id="mi-k">MODE / WORK</div>
       <div id="mi-v"></div>
     </div>
+  </div>
   </section>
 
   <!-- ===== Layout decision ===== -->
@@ -579,6 +596,125 @@ stateDiagram-v2
     </ol>
   </section>
 
+  <!-- ===== Alternatives ===== -->
+  <section id="compare">
+    <h2><span class="tag">H</span>足回りの案の比較</h2>
+    <p class="prose">どの案も「普段は箱、変形すると足回りとアームが出る」という格納のコンセプトは共通です。違うのは箱から何が出てくるかです。</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>案</th><th>格納しやすさ</th><th>速さ</th><th>トリック</th><th>アーム作業の安定</th><th>作りやすさ</th><th>足回りのアクチュエータ</th></tr></thead>
+        <tbody>
+          <tr><td class="grp"><a href="#plan1">案1 4輪ポッド</a></td><td>◎</td><td>◎</td><td>○</td><td>○</td><td>◎</td><td class="q">モーター4＋サーボ10</td></tr>
+          <tr><td class="grp"><a href="#plan2">案2 折り畳み4脚</a></td><td>◎</td><td>△</td><td>◎</td><td>○</td><td>△</td><td class="q">関節12</td></tr>
+          <tr><td class="grp"><a href="#plan3">案3 フリッパークローラ</a></td><td>○</td><td>△</td><td>○</td><td>◎</td><td>○</td><td class="q">モーター2＋フリッパー2</td></tr>
+          <tr><td class="grp"><a href="#plan4">案4 変形ホイール</a></td><td>○</td><td>◎</td><td>○</td><td>○</td><td>△</td><td class="q">モーター4＋サーボ14</td></tr>
+          <tr><td class="grp"><a href="#plan5">案5 脚＋車輪</a></td><td>○</td><td>◎</td><td>◎</td><td>○</td><td>✕</td><td class="q">関節12＋ハブモーター4</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="prose">1台目なら案1か案3、変形の見せ場を最優先するなら案2、全部入りの最終形を目指すなら案5です。案1で走らせてから、ポッドを脚に付け替えて案5へ進む、という段階的な道もあります。</p>
+  </section>
+
+  <section id="plan2" class="plan">
+    <h2><span class="tag">案2</span>折り畳み4脚</h2>
+    <div class="stage alt" id="fig-quad">
+      <div class="controls">
+        <div class="seg" role="group" aria-label="案2のモード切替">
+          <button type="button" id="q-stowed" data-m="stowed" aria-pressed="false">収納</button>
+          <button type="button" id="q-walk" data-m="walk" aria-pressed="false">歩行</button>
+          <button type="button" id="q-work" data-m="work" aria-pressed="false">作業</button>
+        </div>
+        <button type="button" class="play">▶ 連続再生</button>
+      </div>
+      <div class="views">
+        <figure class="view" style="margin:0"><svg viewBox="0 0 520 400" data-view="front" role="img" aria-label="案2 正面図"></svg><figcaption>正面（カメラ側）</figcaption></figure>
+        <figure class="view" style="margin:0"><svg viewBox="0 0 520 400" data-view="side" role="img" aria-label="案2 側面図"></svg><figcaption>側面（右が前）</figcaption></figure>
+      </div>
+      <div class="modeinfo" aria-live="polite"><div class="k mi-k"></div><div class="mi-v"></div></div>
+    </div>
+    <div class="notes">
+      <div><div class="nk">構成</div><p>1脚3関節（股の開き・股の前後・膝）×4脚＝12関節。股の開き関節で脚を跳ね上げ、膝を畳んで側面のくぼみに収める。</p></div>
+      <div><div class="nk">強み</div><p>脚そのものが格納機構になり、展開用の部品がいらない。立ち上がり、ジャンプ、体のひねりなど見せ場が多い。しゃがめばアーム作業も安定する。</p></div>
+      <div><div class="nk">弱み</div><p>6〜7kgを機敏に動かすには、ブラシレスで減速比の低い関節（CubeMars AK、moteusなど）が必要で高価。歩き方とバランスの制御が難しい。</p></div>
+      <div><div class="nk">主な部品</div><p>関節アクチュエータ×12、IMU、各脚の接地検出（モーター電流で代用可）。制御の分担は案1と同じくKakip＋マイコン。</p></div>
+    </div>
+  </section>
+
+  <section id="plan3" class="plan">
+    <h2><span class="tag">案3</span>フリッパー付きクローラ</h2>
+    <div class="stage alt" id="fig-crawler">
+      <div class="controls">
+        <div class="seg" role="group" aria-label="案3のモード切替">
+          <button type="button" id="c-stowed" data-m="stowed" aria-pressed="false">収納</button>
+          <button type="button" id="c-drive" data-m="drive" aria-pressed="false">走行</button>
+          <button type="button" id="c-work" data-m="work" aria-pressed="false">作業</button>
+          <button type="button" id="c-climb" data-m="climb" aria-pressed="false">起き上がり</button>
+        </div>
+        <button type="button" class="play">▶ 連続再生</button>
+      </div>
+      <div class="views one">
+        <figure class="view" style="margin:0"><svg viewBox="0 0 520 400" data-view="side" role="img" aria-label="案3 側面図"></svg><figcaption>側面（右が前）</figcaption></figure>
+        <div class="notes stack">
+          <div><div class="nk">構成</div><p>左右のメインクローラ（DCギヤモーター×2）と、前方のフリッパー×2（高トルクのギヤモーターかサーボ）。</p></div>
+          <div><div class="nk">強み</div><p>接地面が広く、アーム作業中が最も安定する。段差・砂利・坂に強い。フリッパーで前を持ち上げて段差越えや起き上がりができる。</p></div>
+          <div><div class="nk">弱み</div><p>旋回は横滑りなので遅く、電力を食う。履帯が重く、高速走行やキビキビしたトリックは苦手。</p></div>
+          <div><div class="nk">格納</div><p>クローラユニットを底面へ引き込み、フリッパーは後ろへ倒して重ねる。</p></div>
+        </div>
+      </div>
+      <div class="modeinfo" aria-live="polite"><div class="k mi-k"></div><div class="mi-v"></div></div>
+    </div>
+  </section>
+
+  <section id="plan4" class="plan">
+    <h2><span class="tag">案4</span>変形ホイール（爪が開くタイヤ）</h2>
+    <div class="stage alt" id="fig-tw">
+      <div class="controls">
+        <div class="seg" role="group" aria-label="案4のモード切替">
+          <button type="button" id="t-stowed" data-m="stowed" aria-pressed="false">収納</button>
+          <button type="button" id="t-roll" data-m="roll" aria-pressed="false">高速走行</button>
+          <button type="button" id="t-claw" data-m="claw" aria-pressed="false">爪展開</button>
+          <button type="button" id="t-work" data-m="work" aria-pressed="false">作業</button>
+        </div>
+        <button type="button" class="play">▶ 連続再生</button>
+      </div>
+      <div class="views one">
+        <figure class="view" style="margin:0"><svg viewBox="0 0 520 400" data-view="side" role="img" aria-label="案4 側面図"></svg><figcaption>側面（右が前）</figcaption></figure>
+        <div class="notes stack">
+          <div><div class="nk">構成</div><p>案1の4ポッドのタイヤを3分割式にする。分割片はホイール内の小型サーボかリンクで同時に開く。</p></div>
+          <div><div class="nk">強み</div><p>平地は円形で速く、段差では爪を開いて引っかけて登れる。箱→車輪→爪の2段階変形で見栄えがする。</p></div>
+          <div><div class="nk">弱み</div><p>回転するホイールの中にアクチュエータを入れるので、スリップリングかホイール内バッテリーが必要。爪モードは揺れが大きく、カメラ映像がぶれる。</p></div>
+          <div><div class="nk">格納</div><p>案1と同じく、ポッドごと側面のウェルへ引き込む。</p></div>
+        </div>
+      </div>
+      <div class="modeinfo" aria-live="polite"><div class="k mi-k"></div><div class="mi-v"></div></div>
+    </div>
+  </section>
+
+  <section id="plan5" class="plan">
+    <h2><span class="tag">案5</span>脚＋車輪ハイブリッド</h2>
+    <div class="stage alt" id="fig-hybrid">
+      <div class="controls">
+        <div class="seg" role="group" aria-label="案5のモード切替">
+          <button type="button" id="h-stowed" data-m="stowed" aria-pressed="false">収納</button>
+          <button type="button" id="h-drive" data-m="drive" aria-pressed="false">走行</button>
+          <button type="button" id="h-step" data-m="step" aria-pressed="false">段差</button>
+          <button type="button" id="h-work" data-m="work" aria-pressed="false">作業</button>
+        </div>
+        <button type="button" class="play">▶ 連続再生</button>
+      </div>
+      <div class="views one">
+        <figure class="view" style="margin:0"><svg viewBox="0 0 520 400" data-view="side" role="img" aria-label="案5 側面図"></svg><figcaption>側面（右が前）</figcaption></figure>
+        <div class="notes stack">
+          <div><div class="nk">構成</div><p>1脚3関節×4脚＋足先のハブモーター×4＝16アクチュエータ。</p></div>
+          <div><div class="nk">強み</div><p>平地は車輪で速く、段差は脚でまたぐ。しゃがんでの高速走行、片脚上げ、ジャンプなど、トリックの幅が最も広い。</p></div>
+          <div><div class="nk">弱み</div><p>部品数・重量・制御の難しさが最大。足先にモーターが付くぶん脚が重くなり、関節にさらにトルクが要る。</p></div>
+          <div><div class="nk">格納</div><p>案2と同じく脚を畳み、車輪ごと側面に収める。</p></div>
+        </div>
+      </div>
+      <div class="modeinfo" aria-live="polite"><div class="k mi-k"></div><div class="mi-v"></div></div>
+    </div>
+  </section>
+
   <section>
     <div class="warn">
       <h3>確認が必要なこと</h3>
@@ -602,14 +738,14 @@ stateDiagram-v2
   var timers = [];
   function set(m) {
     stage.setAttribute('data-mode', m);
-    document.querySelectorAll('.seg button').forEach(function (b) {
+    stage.querySelectorAll('.seg button').forEach(function (b) {
       b.setAttribute('aria-pressed', b.dataset.m === m ? 'true' : 'false');
     });
     document.getElementById('mi-k').textContent = info[m][0];
     document.getElementById('mi-v').textContent = info[m][1];
   }
   function clear() { timers.forEach(clearTimeout); timers = []; }
-  document.querySelectorAll('.seg button').forEach(function (b) {
+  stage.querySelectorAll('.seg button').forEach(function (b) {
     b.addEventListener('click', function () { clear(); set(b.dataset.m); });
   });
   document.getElementById('play').addEventListener('click', function () {
@@ -618,5 +754,316 @@ stateDiagram-v2
     timers.push(setTimeout(function () { set('work'); }, 5000));
   });
   set('work');
+})();
+</script>
+<script>
+(function () {
+  var D = Math.PI / 180, AL1 = 95, AL2 = 85, LL1 = 75, LL2 = 80, DUR = 1000;
+  var reduce = false;
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  function f(n) { return Math.round(n * 10) / 10; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function ease(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function clamp(t) { return t < 0 ? 0 : t > 1 ? 1 : t; }
+
+  /* ---------- shared drawing ---------- */
+  function ground() {
+    var s = '<ellipse class="s-shadow" cx="255" cy="372" rx="215" ry="9"/><line class="s-ground" x1="10" y1="370" x2="510" y2="370"/><g class="s-hatch">';
+    for (var x = 30; x <= 510; x += 40) s += '<line x1="' + x + '" y1="370" x2="' + (x - 12) + '" y2="384"/>';
+    return s + '</g>';
+  }
+  function arm(x, y, a1, a2, a3) {
+    return '<g transform="translate(' + f(x) + ' ' + f(y) + ')"><rect class="s-arm" x="-22" y="-8" width="44" height="10" rx="2"/>' +
+      '<g transform="rotate(' + f(a1) + ')"><rect class="s-arm" x="-11" y="-' + AL1 + '" width="22" height="' + AL1 + '" rx="10"/>' +
+      '<g transform="translate(0 -' + AL1 + ') rotate(' + f(a2) + ')"><rect class="s-arm" x="-10" y="-' + AL2 + '" width="20" height="' + AL2 + '" rx="9"/>' +
+      '<g transform="translate(0 -' + AL2 + ') rotate(' + f(a3) + ')"><rect class="s-servo" x="-9" y="-18" width="18" height="18" rx="3"/><path class="s-finger" d="M-7 -18 L-11 -38 M7 -18 L11 -38"/><circle class="s-joint" r="9"/></g>' +
+      '<circle class="s-joint" r="11"/></g><circle class="s-joint" r="13"/></g></g>';
+  }
+  function sideArm(top, bottom, u) { return arm(250, lerp(bottom - 45, top, u), lerp(-90, 25, u), lerp(180, 65, u), lerp(0, 45, u)); }
+  function frontArm(top, bottom, u) { return arm(260, lerp(bottom - 14, top, u), lerp(0, 28, u), lerp(180, 62, u), lerp(180, 55, u)); }
+  function sideBody(top, bottom, lid) {
+    return '<rect class="s-body" x="100" y="' + f(top) + '" width="300" height="' + f(bottom - top) + '" rx="14"/>' +
+      '<line class="s-seam" x1="114" y1="' + f(bottom - 28) + '" x2="386" y2="' + f(bottom - 28) + '"/>' +
+      '<line class="s-seam" x1="250" y1="' + f(top + 14) + '" x2="250" y2="' + f(bottom - 28) + '"/>' +
+      '<rect class="s-cam" x="398" y="' + f(top + 20) + '" width="16" height="40" rx="4"/><circle class="s-eye" cx="406" cy="' + f(top + 40) + '" r="4"/>' +
+      '<rect class="s-lid" x="190" y="' + f(top - 5) + '" width="120" height="9" rx="2" transform="rotate(' + f(-110 * lid) + ' 190 ' + f(top) + ')"/>';
+  }
+  function frontBody(top, bottom, lid) {
+    return '<rect class="s-body" x="160" y="' + f(top) + '" width="200" height="' + f(bottom - top) + '" rx="14"/>' +
+      '<line class="s-seam" x1="174" y1="' + f(top + 14) + '" x2="174" y2="' + f(bottom - 14) + '"/><line class="s-seam" x1="346" y1="' + f(top + 14) + '" x2="346" y2="' + f(bottom - 14) + '"/>' +
+      '<rect class="s-cam" x="222" y="' + f(top + 16) + '" width="76" height="40" rx="8"/><circle class="s-lens" cx="260" cy="' + f(top + 36) + '" r="13"/><circle class="s-glint" cx="255" cy="' + f(top + 31) + '" r="3"/>' +
+      '<circle class="s-eye" cx="238" cy="' + f(top + 74) + '" r="4.5"/><circle class="s-eye" cx="282" cy="' + f(top + 74) + '" r="4.5"/>' +
+      '<path d="M250 ' + f(top + 86) + ' Q260 ' + f(top + 95) + ' 270 ' + f(top + 86) + '" style="fill:none;stroke:var(--ink);stroke-width:2"/>' +
+      '<rect class="s-lid" x="200" y="' + f(top - 5) + '" width="120" height="9" rx="2" transform="rotate(' + f(-115 * lid) + ' 200 ' + f(top) + ')"/>';
+  }
+  function bar(x1, y1, x2, y2, w) {
+    var a = 'x1="' + f(x1) + '" y1="' + f(y1) + '" x2="' + f(x2) + '" y2="' + f(y2) + '"';
+    return '<line ' + a + ' style="stroke:var(--ink);stroke-width:' + (w + 4) + ';stroke-linecap:round"/><line ' + a + ' style="stroke:var(--body-2);stroke-width:' + w + ';stroke-linecap:round"/>';
+  }
+  function smallWheel(x, y, r, rot) {
+    var s = '<circle class="s-tire" cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '"/><circle class="s-rim" cx="' + f(x) + '" cy="' + f(y) + '" r="' + (r * .6) + '"/>';
+    for (var i = 0; i < 3; i++) {
+      var a = (rot + i * 120) * D;
+      s += '<line x1="' + f(x) + '" y1="' + f(y) + '" x2="' + f(x + Math.cos(a) * r * .6) + '" y2="' + f(y + Math.sin(a) * r * .6) + '" style="stroke:var(--rim);stroke-width:3"/>';
+    }
+    return s + '<circle class="s-hub" cx="' + f(x) + '" cy="' + f(y) + '" r="4"/>';
+  }
+
+  /* ---------- legged (plan 2 & 5) ---------- */
+  function legPts(hx, hy, h, k, s) {
+    var kx = hx + s * LL1 * Math.sin(h * D), ky = hy + LL1 * Math.cos(h * D);
+    return { kx: kx, ky: ky, fx: kx + s * LL2 * Math.sin((h + k) * D), fy: ky + LL2 * Math.cos((h + k) * D) };
+  }
+  function gaitAngles(p, t) {
+    var g = { hF: p.hF, kF: p.kF, hR: p.hR, kR: p.kR, bob: 0, phL: 0 };
+    if (p.gait > 0) {
+      var ph = t * 0.006;
+      g.hF += p.gait * 10 * Math.sin(ph); g.kF -= p.gait * 26 * Math.max(0, Math.cos(ph));
+      g.hR += p.gait * 10 * Math.sin(ph + Math.PI); g.kR -= p.gait * 26 * Math.max(0, Math.cos(ph + Math.PI));
+      g.bob = p.gait * 2.5 * Math.abs(Math.sin(ph)); g.ph = ph;
+    }
+    return g;
+  }
+  function leg(hx, hy, h, k, s, wheel, rot) {
+    var q = legPts(hx, hy, h, k, s);
+    var o = bar(hx, hy, q.kx, q.ky, 13) + bar(q.kx, q.ky, q.fx, q.fy, 10);
+    o += '<circle class="s-servo" cx="' + f(hx) + '" cy="' + f(hy) + '" r="13"/><circle class="s-joint" cx="' + f(q.kx) + '" cy="' + f(q.ky) + '" r="8"/>';
+    o += wheel ? smallWheel(q.fx, q.fy, 20, rot) : '<circle class="s-tire" cx="' + f(q.fx) + '" cy="' + f(q.fy) + '" r="7"/>';
+    return o;
+  }
+  function leggedSide(p, t, acc, wheel) {
+    var g = gaitAngles(p, t), hy = p.hipY - g.bob, top = hy - 115, bottom = hy + 15;
+    var o = ground() + sideArm(top, bottom, p.arm) + sideBody(top, bottom, p.lid);
+    if (wheel) o += '<rect class="s-strut" x="130" y="' + f(bottom) + '" width="24" height="10" rx="2"/><rect class="s-strut" x="346" y="' + f(bottom) + '" width="24" height="10" rx="2"/>';
+    o += leg(190, hy, g.hR, g.kR, -1, wheel, acc.rot) + leg(310, hy, g.hF, g.kF, 1, wheel, acc.rot);
+    return o + '<text class="s-dim" x="14" y="24">SIDE</text><text class="s-dim" x="440" y="24">FRONT →</text>';
+  }
+  function quadFront(p, t) {
+    var g = gaitAngles(p, t), hy = p.hipY - g.bob, top = hy - 115, bottom = hy + 15;
+    var o = ground() + frontArm(top, bottom, p.arm) + frontBody(top, bottom, p.lid);
+    function fl(hx, s, h, k) {
+      var kv = LL1 * Math.cos(h * D), v = kv + LL2 * Math.cos((h + k) * D);
+      var kx = hx + s * (p.spread * .55 + 6 * Math.min(1, kv / 40)), fx = hx + s * p.spread;
+      return bar(hx, hy, kx, hy + kv, 13) + bar(kx, hy + kv, fx, hy + v, 10) +
+        '<rect class="s-servo" x="' + f(hx - 12) + '" y="' + f(hy - 14) + '" width="24" height="28" rx="4"/>' +
+        '<circle class="s-joint" cx="' + f(kx) + '" cy="' + f(hy + kv) + '" r="8"/><circle class="s-tire" cx="' + f(fx) + '" cy="' + f(hy + v) + '" r="7"/>';
+    }
+    var hL = p.hF, kL = p.kF, hR = p.hF, kR = p.kF;
+    if (p.gait > 0) { hL = g.hF; kL = g.kF; hR = g.hR; kR = g.kR; }
+    o += fl(166, -1, hL, kL) + fl(354, 1, hR, kR);
+    return o + '<text class="s-dim" x="14" y="24">FRONT</text>';
+  }
+
+  /* ---------- crawler (plan 3) ---------- */
+  function stadium(x1, x2, cy, r) {
+    return 'M' + x1 + ' ' + f(cy - r) + ' L' + x2 + ' ' + f(cy - r) + ' A' + r + ' ' + r + ' 0 0 1 ' + x2 + ' ' + f(cy + r) + ' L' + x1 + ' ' + f(cy + r) + ' A' + r + ' ' + r + ' 0 0 1 ' + x1 + ' ' + f(cy - r) + ' Z';
+  }
+  function tread(d, off) { return '<path d="' + d + '" style="fill:none;stroke:var(--rim);stroke-width:4;stroke-dasharray:3 9;stroke-dashoffset:' + f(off) + '"/>'; }
+  function flipper(px, py, ang, off) {
+    var a = ang * D, dx = Math.cos(a), dy = -Math.sin(a), nx = -dy, ny = dx, L = 110, r0 = 26, r1 = 14;
+    var tx = px + dx * L, ty = py + dy * L;
+    var d = 'M' + f(px + nx * r0) + ' ' + f(py + ny * r0) + ' L' + f(tx + nx * r1) + ' ' + f(ty + ny * r1) +
+      ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + f(tx - nx * r1) + ' ' + f(ty - ny * r1) +
+      ' L' + f(px - nx * r0) + ' ' + f(py - ny * r0) + ' A' + r0 + ' ' + r0 + ' 0 0 0 ' + f(px + nx * r0) + ' ' + f(py + ny * r0) + ' Z';
+    return '<path class="s-tire" d="' + d + '"/>' + tread(d, off) + '<circle class="s-hub" cx="' + f(tx) + '" cy="' + f(ty) + '" r="7"/><circle class="s-servo" cx="' + f(px) + '" cy="' + f(py) + '" r="13"/>';
+  }
+  function crawler(p, t, acc) {
+    var bottom = 370 - p.L, top = bottom - 150, cy = 300 + p.L, d = stadium(140, 360, cy, 30);
+    var r = sideArm(top, bottom, p.arm) + sideBody(top, bottom, p.lid) +
+      '<path class="s-ghost" d="' + stadium(140, 360, 300, 30) + '" opacity="' + f(p.ghost) + '"/>' +
+      '<g opacity="' + f(p.trk) + '"><path class="s-tire" d="' + d + '"/>' + tread(d, -acc.tread) +
+      '<circle class="s-rim" cx="140" cy="' + f(cy) + '" r="18" style="fill:var(--body-2)"/><circle class="s-rim" cx="360" cy="' + f(cy) + '" r="18" style="fill:var(--body-2)"/>' +
+      '<circle class="s-hub" cx="213" cy="' + f(cy + 12) + '" r="11"/><circle class="s-hub" cx="287" cy="' + f(cy + 12) + '" r="11"/>' +
+      flipper(360, cy, p.flip, -acc.tread) + '</g>';
+    return ground() + '<g transform="rotate(' + f(-p.tilt) + ' 140 340)">' + r + '</g>' + '<text class="s-dim" x="14" y="24">SIDE</text><text class="s-dim" x="440" y="24">FRONT →</text>';
+  }
+
+  /* ---------- transforming wheel (plan 4) ---------- */
+  var TR = 58;
+  function twSegs(cx, cy, rot, open) {
+    var segs = [], maxDy = -1e9;
+    for (var i = 0; i < 3; i++) {
+      var a0 = (rot + i * 120) * D, px = cx + TR * Math.cos(a0), py = cy + TR * Math.sin(a0), q = open * 62 * D, pts = [];
+      for (var j = 0; j <= 8; j++) {
+        var a = a0 + j * 13.5 * D, x = cx + TR * Math.cos(a) - px, y = cy + TR * Math.sin(a) - py;
+        var X = px + x * Math.cos(q) - y * Math.sin(q), Y = py + x * Math.sin(q) + y * Math.cos(q);
+        pts.push([X, Y]); if (Y - cy > maxDy) maxDy = Y - cy;
+      }
+      segs.push({ px: px, py: py, pts: pts });
+    }
+    return { segs: segs, maxDy: maxDy };
+  }
+  function twDraw(cx, cy, rot, open) {
+    var w = twSegs(cx, cy, rot, open), o = '';
+    w.segs.forEach(function (s) { o += bar(cx, cy, s.px, s.py, 6); });
+    w.segs.forEach(function (s) {
+      var d = 'M' + s.pts.map(function (p) { return f(p[0]) + ' ' + f(p[1]); }).join(' L');
+      o += '<path d="' + d + '" style="fill:none;stroke:var(--tire);stroke-width:16;stroke-linecap:round;stroke-linejoin:round"/>' +
+        '<path d="' + d + '" style="fill:none;stroke:var(--rim);stroke-width:2;stroke-dasharray:2 7"/>' +
+        '<circle class="s-joint" cx="' + f(s.px) + '" cy="' + f(s.py) + '" r="5"/>';
+    });
+    return o + '<circle class="s-hub" cx="' + f(cx) + '" cy="' + f(cy) + '" r="12"/><circle class="s-servo" cx="' + f(cx) + '" cy="' + f(cy) + '" r="6"/>';
+  }
+  function tw(p, t, acc) {
+    var maxDy = twSegs(0, 0, acc.rot, p.open).maxDy, hubDep = 370 - 8 - maxDy;
+    var hub = lerp(290, hubDep, p.w), bottom = lerp(370, hub + 22, p.w), top = bottom - 150;
+    var xr = lerp(180, 132, p.w), xf = lerp(320, 368, p.w);
+    var o = ground() + sideArm(top, bottom, p.arm) + sideBody(top, bottom, p.lid);
+    o += '<g opacity="' + f(p.ghost) + '"><circle class="s-ghost" cx="180" cy="' + f(bottom - 80) + '" r="' + TR + '"/><circle class="s-ghost" cx="320" cy="' + f(bottom - 80) + '" r="' + TR + '"/></g>';
+    o += '<g opacity="' + f(p.w) + '">' +
+      '<rect class="s-strut" x="' + f(xr) + '" y="' + f(hub - 7) + '" width="' + f(250 - xr) + '" height="14" rx="3"/>' +
+      '<rect class="s-strut" x="250" y="' + f(hub - 7) + '" width="' + f(xf - 250) + '" height="14" rx="3"/>' +
+      twDraw(xr, hub, acc.rot, p.open) + twDraw(xf, hub, acc.rot, p.open) + '</g>';
+    return o + '<text class="s-dim" x="14" y="24">SIDE</text><text class="s-dim" x="440" y="24">FRONT →</text>';
+  }
+
+  /* ---------- figure engine ---------- */
+  function setup(cfg) {
+    var el = document.getElementById(cfg.id); if (!el) return;
+    var svgs = {}; el.querySelectorAll('svg[data-view]').forEach(function (s) { svgs[s.dataset.view] = s; });
+    var mode = cfg.start, pose = Object.assign({}, cfg.poses[mode]), acc = { rot: 0, tread: 0 };
+    var anim = null, queue = [], holdUntil = 0, last = performance.now(), visible = true;
+    function render(now) {
+      var tt = reduce ? 0 : now;
+      for (var v in cfg.draw) if (svgs[v]) svgs[v].innerHTML = cfg.draw[v](pose, tt, acc);
+    }
+    function ui() {
+      el.querySelectorAll('.seg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.m === mode ? 'true' : 'false'); });
+      el.querySelector('.mi-k').textContent = 'MODE / ' + mode.toUpperCase();
+      el.querySelector('.mi-v').textContent = cfg.info[mode];
+    }
+    function route(a, b) {
+      var prev = {}, q = [a]; prev[a] = null;
+      while (q.length) {
+        var x = q.shift(); if (x === b) break;
+        cfg.edges.forEach(function (e) {
+          var y = e[0] === x ? e[1] : e[1] === x ? e[0] : null;
+          if (y && !(y in prev)) { prev[y] = x; q.push(y); }
+        });
+      }
+      var path = [b]; while (prev[path[0]] !== null && prev[path[0]] !== undefined) path.unshift(prev[path[0]]);
+      var seq = [];
+      for (var i = 1; i < path.length; i++) {
+        var A = path[i - 1], B = path[i], via = [];
+        cfg.edges.forEach(function (e) {
+          if (e[0] === A && e[1] === B) via = (e[2] || []).slice();
+          if (e[1] === A && e[0] === B) via = (e[2] || []).slice().reverse();
+        });
+        seq = seq.concat(via, [cfg.poses[B]]);
+      }
+      return seq;
+    }
+    function go(target) {
+      if (target === mode && !anim) return;
+      var seq = route(mode, target); mode = target; ui();
+      if (reduce) { pose = Object.assign({}, cfg.poses[target]); anim = null; render(0); return; }
+      anim = { seq: seq, i: 0, start: performance.now(), from: Object.assign({}, pose) };
+    }
+    function interp(A, B, t) {
+      var o = {};
+      for (var k in B) {
+        var w = (cfg.win && cfg.win[k]) || [0, 1], inc = B[k] >= A[k];
+        var s = inc ? w[0] : 1 - w[1], e = inc ? w[1] : 1 - w[0];
+        o[k] = lerp(A[k], B[k], ease(clamp((t - s) / (e - s))));
+      }
+      return o;
+    }
+    el.querySelectorAll('.seg button').forEach(function (b) {
+      b.addEventListener('click', function () { queue = []; go(b.dataset.m); });
+    });
+    el.querySelector('.play').addEventListener('click', function () {
+      queue = cfg.play.slice(1); go(cfg.play[0]); holdUntil = 0;
+    });
+    function tick(now) {
+      var dt = Math.min(50, now - last); last = now;
+      if (anim) {
+        var t = (now - anim.start) / DUR, tgt = anim.seq[anim.i];
+        if (t >= 1) {
+          pose = Object.assign({}, tgt); anim.i++; anim.start = now; anim.from = Object.assign({}, pose);
+          if (anim.i >= anim.seq.length) { anim = null; holdUntil = now + 900; }
+        } else pose = interp(anim.from, tgt, t);
+      } else if (queue.length && now > holdUntil) go(queue.shift());
+      if (!reduce) { acc.rot += dt * 0.3 * (pose.spin || 0); acc.tread += dt * 0.06 * (pose.roll || 0); }
+      if (visible) render(now);
+      requestAnimationFrame(tick);
+    }
+    try {
+      new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(el);
+    } catch (e) {}
+    ui(); render(performance.now()); requestAnimationFrame(tick);
+  }
+
+  var quadPoses = {
+    stowed: { hipY: 355, hF: 90, kF: -180, hR: 90, kR: -180, spread: 0, gait: 0, arm: 0, lid: 0 },
+    walk: { hipY: 243, hF: 35, kF: -70, hR: 35, kR: -70, spread: 14, gait: 1, arm: 0, lid: 0 },
+    work: { hipY: 258, hF: 42, kF: -84, hR: 42, kR: -84, spread: 28, gait: 0, arm: 1, lid: 1 }
+  };
+  var crouch = { hipY: 293, hF: 60, kF: -120, hR: 60, kR: -120, spread: 34, gait: 0, arm: 0, lid: 0 };
+  var armWin = { lid: [0, .4], arm: [.3, 1] };
+  setup({
+    id: 'fig-quad', start: 'walk', poses: quadPoses, play: ['stowed', 'walk', 'work'],
+    edges: [['stowed', 'walk', [crouch]], ['walk', 'work']],
+    win: { lid: [0, .4], arm: [.3, 1], gait: [.5, 1] },
+    draw: { front: quadFront, side: function (p, t, a) { return leggedSide(p, t, a, false); } },
+    info: {
+      stowed: '脚を跳ね上げて膝を畳み、側面のくぼみに収めた箱の状態。車体は床に直置き。',
+      walk: '脚を開いてしゃがみ、立ち上がってトロット歩行（対角の脚を同時に動かす歩き方）。',
+      work: '脚を広げて少し低く構え、重心を下げてからハッチを開けてアームを展開。'
+    }
+  });
+  setup({
+    id: 'fig-crawler', start: 'drive', play: ['stowed', 'drive', 'climb', 'drive', 'work'],
+    poses: {
+      stowed: { L: 0, trk: 0, flip: 180, tilt: 0, arm: 0, lid: 0, ghost: 1, roll: 0 },
+      drive: { L: 40, trk: 1, flip: 20, tilt: 0, arm: 0, lid: 0, ghost: 0, roll: 1 },
+      work: { L: 40, trk: 1, flip: -8, tilt: 0, arm: 1, lid: 1, ghost: 0, roll: 0 },
+      climb: { L: 40, trk: 1, flip: -68, tilt: 18, arm: 0, lid: 0, ghost: 0, roll: .6 }
+    },
+    edges: [['stowed', 'drive'], ['drive', 'work'], ['drive', 'climb']],
+    win: { lid: [0, .4], arm: [.3, 1], trk: [0, .35], ghost: [0, .3], L: [0, .6], flip: [0, .7], tilt: [.3, 1] },
+    draw: { side: crawler },
+    info: {
+      stowed: '履帯は底面に引き込み、フリッパーは後ろへ倒して収納（点線）。',
+      drive: '履帯が下りて車体が持ち上がる。フリッパーは少し上向きにして段差に備える。',
+      work: 'フリッパーを前に伸ばして接地面を広げ、アーム作業の土台を安定させる。',
+      climb: 'フリッパーで地面を押して前を持ち上げる。段差越えや転倒からの起き上がりに使う。'
+    }
+  });
+  setup({
+    id: 'fig-tw', start: 'claw', play: ['stowed', 'roll', 'claw', 'roll', 'work'],
+    poses: {
+      stowed: { w: 0, open: 0, spin: 0, arm: 0, lid: 0, ghost: 1 },
+      roll: { w: 1, open: 0, spin: 1, arm: 0, lid: 0, ghost: 0 },
+      claw: { w: 1, open: 1, spin: .45, arm: 0, lid: 0, ghost: 0 },
+      work: { w: 1, open: 0, spin: 0, arm: 1, lid: 1, ghost: 0 }
+    },
+    edges: [['stowed', 'roll'], ['roll', 'claw'], ['roll', 'work']],
+    win: armWin,
+    draw: { side: tw },
+    info: {
+      stowed: '案1と同じく、ポッドごと側面のウェルに格納（点線）。',
+      roll: 'タイヤは円形のまま高速走行。',
+      claw: 'タイヤが3つの爪に開き、段差や不整地を引っかけて登る。車体が上下に揺れる。',
+      work: '円形に戻して停止し、ハッチを開けてアームを展開。'
+    }
+  });
+  setup({
+    id: 'fig-hybrid', start: 'step', play: ['stowed', 'drive', 'step', 'drive', 'work'],
+    poses: {
+      stowed: { hipY: 345, hF: 90, kF: -180, hR: 90, kR: -180, gait: 0, spin: 0, arm: 0, lid: 0 },
+      drive: { hipY: 273, hF: 60, kF: -120, hR: 60, kR: -120, gait: 0, spin: 1, arm: 0, lid: 0 },
+      step: { hipY: 223, hF: 80, kF: -100, hR: 35, kR: -70, gait: 0, spin: .3, arm: 0, lid: 0 },
+      work: { hipY: 238, hF: 42, kF: -84, hR: 42, kR: -84, gait: 0, spin: 0, arm: 1, lid: 1 }
+    },
+    edges: [['stowed', 'drive'], ['drive', 'step'], ['drive', 'work']],
+    win: armWin,
+    draw: { side: function (p, t, a) { return leggedSide(p, t, a, true); } },
+    info: {
+      stowed: '脚を畳んで、足先の車輪ごと側面に収める。',
+      drive: '低くしゃがんで重心を下げ、足先の車輪で高速走行。',
+      step: '車高を上げ、前脚を持ち上げて段差をまたぐ。',
+      work: '脚で姿勢を作って止まり、ハッチを開けてアームを展開。'
+    }
+  });
 })();
 </script>
