@@ -1,0 +1,622 @@
+<title>変形ボックスロボット構想</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=JetBrains+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: blueprint sheet — interactive transform figure on top, then spec sections in a single 960px column */
+:root {
+  --paper: #edf0f1;
+  --sheet: #f8f9f9;
+  --ink: #1b2430;
+  --muted: #5a6571;
+  --line: #c6ced4;
+  --accent: #dd6a2c;   /* safety orange: joints, actuators */
+  --steel: #2f6f8f;    /* servo / electronics */
+  --body: #d6dce0;
+  --body-2: #c3cbd1;
+  --tire: #2a2f36;
+  --rim: #8b96a0;
+  --grid: rgba(47,111,143,.08);
+  --f-display: "Chakra Petch", "Zen Kaku Gothic New", system-ui, sans-serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #11161b; --sheet: #182027; --ink: #e3e8ec; --muted: #94a1ad; --line: #2c3742;
+    --accent: #ee7d40; --steel: #5ba3c6; --body: #3a4652; --body-2: #4a5764; --tire: #07090b; --rim: #6d7984;
+    --grid: rgba(91,163,198,.07); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #11161b; --sheet: #182027; --ink: #e3e8ec; --muted: #94a1ad; --line: #2c3742;
+  --accent: #ee7d40; --steel: #5ba3c6; --body: #3a4652; --body-2: #4a5764; --tire: #07090b; --rim: #6d7984;
+  --grid: rgba(91,163,198,.07); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--f-body);
+  font-size: 15px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+header { display: grid; gap: 10px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--steel); }
+h1 { font-family: var(--f-display); font-weight: 600; font-size: clamp(28px, 5vw, 44px); line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 .jp { font-family: var(--f-body); font-weight: 700; }
+.lede { max-width: 62ch; color: var(--muted); margin: 0; }
+h2 { font-family: var(--f-body); font-weight: 700; font-size: 22px; margin: 0 0 4px; text-wrap: balance; display: flex; gap: 12px; align-items: baseline; }
+h2 .tag { font-family: var(--f-mono); font-size: 12px; color: var(--accent); letter-spacing: .08em; font-weight: 600; }
+h3 { font-size: 16px; margin: 0; font-weight: 700; }
+p { margin: 0; }
+section { display: grid; gap: 18px; }
+.prose { max-width: 66ch; display: grid; gap: 12px; }
+
+/* ---------- Stage ---------- */
+.stage {
+  background-color: var(--sheet);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 20px; display: grid; gap: 16px;
+}
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; border: 1px solid var(--ink); border-radius: 4px; overflow: hidden; }
+.seg button {
+  font: 600 14px/1 var(--f-body); padding: 10px 16px; background: transparent; color: var(--ink);
+  border: 0; border-right: 1px solid var(--ink); cursor: pointer;
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+.seg button:focus-visible, .play:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.play { font: 500 13px/1 var(--f-body); padding: 10px 14px; border: 1px dashed var(--muted); border-radius: 4px; background: transparent; color: var(--ink); cursor: pointer; }
+.views { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.view { min-width: 0; display: grid; gap: 4px; }
+.view svg { width: 100%; height: auto; display: block; }
+.view figcaption { font-family: var(--f-mono); font-size: 12px; color: var(--muted); letter-spacing: .06em; }
+.modeinfo { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.modeinfo .k { font-family: var(--f-mono); font-size: 12px; color: var(--accent); padding-top: 3px; letter-spacing: .06em; }
+@media (max-width: 640px) { .views { grid-template-columns: 1fr; } .modeinfo { grid-template-columns: 1fr; } }
+
+/* SVG paint */
+.s-body { fill: var(--body); stroke: var(--ink); stroke-width: 2; }
+.s-lid { fill: var(--body-2); stroke: var(--ink); stroke-width: 2; }
+.s-seam { stroke: var(--muted); stroke-width: 1.2; fill: none; }
+.s-tire { fill: var(--tire); stroke: var(--ink); stroke-width: 1.5; }
+.s-rim { fill: none; stroke: var(--rim); stroke-width: 3; }
+.s-hub { fill: var(--rim); }
+.s-strut { fill: var(--muted); stroke: var(--ink); stroke-width: 1.2; }
+.s-servo { fill: var(--steel); stroke: var(--ink); stroke-width: 1.2; }
+.s-arm { fill: var(--body-2); stroke: var(--ink); stroke-width: 1.8; }
+.s-joint { fill: var(--accent); stroke: var(--ink); stroke-width: 1.5; }
+.s-finger { stroke: var(--ink); stroke-width: 6; stroke-linecap: round; fill: none; }
+.s-cam { fill: var(--ink); }
+.s-lens { fill: var(--tire); stroke: var(--steel); stroke-width: 3; }
+.s-glint { fill: var(--sheet); }
+.s-eye { fill: var(--accent); }
+.s-ground { stroke: var(--ink); stroke-width: 2; }
+.s-hatch { stroke: var(--muted); stroke-width: 1; }
+.s-shadow { fill: var(--ink); opacity: .1; }
+.s-ghost { fill: none; stroke: var(--steel); stroke-width: 2; stroke-dasharray: 6 5; }
+.s-dim { font: 11px var(--f-mono); fill: var(--muted); }
+
+/* Animated parts: default = transition timings; positions per mode */
+.mv { transition: transform .9s cubic-bezier(.6,.05,.3,1), opacity .5s ease; }
+.ghost { transition: opacity .4s ease; }
+
+/* stowed (default positions) */
+.bodyg { transform: translate(0px, 0px); }
+.wl { transform: translate(0px, 0px); } .wr { transform: translate(0px, 0px); }
+.cl, .cr { transform: rotate(0deg); }
+.sw-f, .sw-r { transform: translate(0px, 0px); opacity: 0; }
+.lid-f { transform-origin: 200px 160px; transform: rotate(0deg); }
+.lid-s { transform-origin: 190px 190px; transform: rotate(0deg); }
+.fa0 { transform: translate(260px, 338px); } .fa1 { transform: rotate(0deg); } .fa2 { transform: translate(0px, -105px) rotate(180deg); } .fa3 { transform: translate(0px, -95px) rotate(180deg); }
+.sa0 { transform: translate(250px, 300px); } .sa1 { transform: rotate(-90deg); } .sa2 { transform: translate(0px, -125px) rotate(180deg); } .sa3 { transform: translate(0px, -115px) rotate(0deg); }
+.ghost { opacity: 1; }
+
+/* sequencing: stowing waits for arm, deploying waits for wheels */
+[data-mode="stowed"] .wheelmv { transition-delay: .9s; }
+[data-mode="stowed"] .bodyg { transition-delay: .9s; }
+[data-mode="stowed"] .ghost { transition-delay: 1.6s; }
+[data-mode="work"] .armmv { transition-delay: .7s; }
+[data-mode="work"] .lidmv { transition-delay: .2s; }
+
+[data-mode="drive"] .bodyg, [data-mode="work"] .bodyg { transform: translate(0px, -30px); }
+[data-mode="drive"] .wl, [data-mode="work"] .wl { transform: translate(-112px, 10px); }
+[data-mode="drive"] .wr, [data-mode="work"] .wr { transform: translate(112px, 10px); }
+[data-mode="drive"] .cl { transform: rotate(7deg); }
+[data-mode="drive"] .cr { transform: rotate(-7deg); }
+[data-mode="drive"] .sw-f, [data-mode="work"] .sw-f { transform: translate(48px, 18px); opacity: 1; }
+[data-mode="drive"] .sw-r, [data-mode="work"] .sw-r { transform: translate(-48px, 18px); opacity: 1; }
+[data-mode="drive"] .ghost, [data-mode="work"] .ghost { opacity: 0; }
+[data-mode="work"] .lid-f { transform: rotate(-115deg); }
+[data-mode="work"] .lid-s { transform: rotate(-110deg); }
+[data-mode="work"] .fa0 { transform: translate(260px, 160px); }
+[data-mode="work"] .fa1 { transform: rotate(28deg); }
+[data-mode="work"] .fa2 { transform: translate(0px, -105px) rotate(62deg); }
+[data-mode="work"] .fa3 { transform: translate(0px, -95px) rotate(55deg); }
+[data-mode="work"] .sa0 { transform: translate(250px, 190px); }
+[data-mode="work"] .sa1 { transform: rotate(25deg); }
+[data-mode="work"] .sa2 { transform: translate(0px, -125px) rotate(65deg); }
+[data-mode="work"] .sa3 { transform: translate(0px, -115px) rotate(45deg); }
+@media (prefers-reduced-motion: reduce) { .mv, .ghost { transition: none !important; } }
+
+/* ---------- Cards / grids ---------- */
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 640px) { .grid2, .grid4 { grid-template-columns: 1fr; } }
+.opt { border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: grid; gap: 8px; align-content: start; background: var(--sheet); }
+.opt.pick { border: 2px solid var(--accent); }
+.badge { justify-self: start; font: 600 11px/1 var(--f-mono); letter-spacing: .08em; padding: 5px 8px; border-radius: 3px; border: 1px solid currentColor; color: var(--muted); }
+.opt.pick .badge { color: var(--accent); }
+.opt ul, .sys ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.sys { border-top: 2px solid var(--ink); padding-top: 12px; display: grid; gap: 8px; align-content: start; }
+.sys .who { font: 600 12px var(--f-mono); color: var(--steel); letter-spacing: .06em; }
+
+.pod { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; align-items: center; }
+@media (max-width: 640px) { .pod { grid-template-columns: 1fr; } }
+.pod svg { width: 100%; height: auto; display: block; background: var(--sheet); border: 1px solid var(--line); border-radius: 6px; }
+.pod ol { margin: 0; padding-left: 1.4em; display: grid; gap: 8px; }
+.pod li::marker { font-family: var(--f-mono); color: var(--accent); font-weight: 600; }
+
+.calc { font-family: var(--f-mono); font-size: 13px; background: var(--sheet); border: 1px solid var(--line); border-left: 3px solid var(--steel); padding: 14px 16px; overflow-x: auto; white-space: pre; line-height: 1.7; }
+
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px var(--f-mono); color: var(--muted); letter-spacing: .06em; background: var(--paper); }
+td.q { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.grp { font-weight: 700; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 48px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+.steps li::before { content: counter(s, decimal-leading-zero); font: 600 18px var(--f-display); color: var(--accent); }
+.steps b { display: block; }
+.steps span { color: var(--muted); font-size: 14px; }
+
+.mermaid-box { background: var(--sheet); border: 1px solid var(--line); border-radius: 6px; padding: 12px; overflow-x: auto; }
+.warn { border: 1px solid var(--accent); border-radius: 6px; padding: 16px 18px; display: grid; gap: 8px; background: var(--sheet); }
+.warn ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+code { font-family: var(--f-mono); font-size: .92em; }
+a { color: var(--steel); }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Concept sheet · rev.0 · 2026-11-17</div>
+    <h1><span class="jp">変形ボックスロボット</span> <span style="color:var(--accent)">BOX-TRANSFORMER</span></h1>
+    <p class="lede">普段はただの箱。モードを切り替えると、側面から4つの車輪ポッドが張り出し、天板からロボットアームが立ち上がる。PTK7465 PLUS×8のアーム、操舵とキャンバー付きの高速ホイール、正面カメラ、制御はKakip。下のボタンで変形を確認できます。</p>
+  </header>
+
+  <!-- ===== Interactive figure ===== -->
+  <section class="stage" id="stage" data-mode="work" aria-label="完成予想図">
+    <div class="controls">
+      <div class="seg" role="group" aria-label="モード切替">
+        <button type="button" id="m-stowed" data-m="stowed" aria-pressed="false">収納</button>
+        <button type="button" id="m-drive" data-m="drive" aria-pressed="false">走行</button>
+        <button type="button" id="m-work" data-m="work" aria-pressed="true">作業</button>
+      </div>
+      <button type="button" class="play" id="play">▶ 収納→走行→作業 を連続再生</button>
+    </div>
+
+    <div class="views">
+      <!-- FRONT VIEW -->
+      <figure class="view" style="margin:0">
+        <svg viewBox="0 0 520 400" role="img" aria-label="正面図">
+          <ellipse class="s-shadow" cx="260" cy="372" rx="215" ry="9"/>
+          <line class="s-ground" x1="10" y1="370" x2="510" y2="370"/>
+          <g class="s-hatch">
+            <line x1="30" y1="370" x2="18" y2="384"/><line x1="70" y1="370" x2="58" y2="384"/><line x1="110" y1="370" x2="98" y2="384"/><line x1="150" y1="370" x2="138" y2="384"/><line x1="190" y1="370" x2="178" y2="384"/><line x1="230" y1="370" x2="218" y2="384"/><line x1="270" y1="370" x2="258" y2="384"/><line x1="310" y1="370" x2="298" y2="384"/><line x1="350" y1="370" x2="338" y2="384"/><line x1="390" y1="370" x2="378" y2="384"/><line x1="430" y1="370" x2="418" y2="384"/><line x1="470" y1="370" x2="458" y2="384"/><line x1="510" y1="370" x2="498" y2="384"/>
+          </g>
+
+          <!-- wheels (behind body) -->
+          <g class="wl mv wheelmv">
+            <g class="cl mv wheelmv" style="transform-origin:184px 285px">
+              <rect class="s-strut" x="184" y="278" width="118" height="14" rx="3"/>
+              <rect class="s-servo" x="208" y="266" width="20" height="38" rx="3"/>
+              <rect class="s-tire" x="162" y="210" width="44" height="150" rx="18"/>
+              <line class="s-rim" x1="176" y1="222" x2="176" y2="348"/>
+              <line class="s-rim" x1="192" y1="222" x2="192" y2="348"/>
+              <rect class="s-hub" x="176" y="277" width="16" height="16" rx="3"/>
+            </g>
+          </g>
+          <g class="wr mv wheelmv">
+            <g class="cr mv wheelmv" style="transform-origin:336px 285px">
+              <rect class="s-strut" x="218" y="278" width="118" height="14" rx="3"/>
+              <rect class="s-servo" x="292" y="266" width="20" height="38" rx="3"/>
+              <rect class="s-tire" x="314" y="210" width="44" height="150" rx="18"/>
+              <line class="s-rim" x1="328" y1="222" x2="328" y2="348"/>
+              <line class="s-rim" x1="344" y1="222" x2="344" y2="348"/>
+              <rect class="s-hub" x="328" y="277" width="16" height="16" rx="3"/>
+            </g>
+          </g>
+
+          <g class="bodyg mv">
+            <!-- arm (behind body when stowed) -->
+            <g class="fa0 mv armmv">
+              <rect class="s-arm" x="-22" y="-8" width="44" height="10" rx="2"/>
+              <g class="fa1 mv armmv">
+                <rect class="s-arm" x="-11" y="-105" width="22" height="105" rx="10"/>
+                <g class="fa2 mv armmv">
+                  <rect class="s-arm" x="-10" y="-95" width="20" height="95" rx="9"/>
+                  <g class="fa3 mv armmv">
+                    <rect class="s-servo" x="-9" y="-18" width="18" height="18" rx="3"/>
+                    <path class="s-finger" d="M-7 -18 L-11 -38 M7 -18 L11 -38"/>
+                    <circle class="s-joint" r="9"/>
+                  </g>
+                  <circle class="s-joint" r="11"/>
+                </g>
+                <circle class="s-joint" r="13"/>
+              </g>
+            </g>
+
+            <rect class="s-body" x="160" y="160" width="200" height="200" rx="14"/>
+            <line class="s-seam" x1="174" y1="174" x2="174" y2="346"/>
+            <line class="s-seam" x1="346" y1="174" x2="346" y2="346"/>
+            <line class="s-seam" x1="174" y1="318" x2="346" y2="318"/>
+            <rect class="s-cam" x="222" y="186" width="76" height="40" rx="8"/>
+            <circle class="s-lens" cx="260" cy="206" r="13"/>
+            <circle class="s-glint" cx="255" cy="201" r="3"/>
+            <circle class="s-eye" cx="238" cy="252" r="4.5"/>
+            <circle class="s-eye" cx="282" cy="252" r="4.5"/>
+            <path class="s-seam" d="M250 266 Q260 275 270 266" style="stroke:var(--ink);stroke-width:2"/>
+            <g class="s-seam"><line x1="232" y1="334" x2="288" y2="334"/><line x1="232" y1="342" x2="288" y2="342"/></g>
+            <rect class="s-lid lid-f mv lidmv" x="200" y="155" width="120" height="9" rx="2"/>
+            <rect class="s-strut" x="180" y="360" width="20" height="10" rx="2"/>
+            <rect class="s-strut" x="320" y="360" width="20" height="10" rx="2"/>
+            <!-- ghost outlines: stowed wheels -->
+            <g class="ghost">
+              <rect class="s-ghost" x="162" y="210" width="44" height="150" rx="18"/>
+              <rect class="s-ghost" x="314" y="210" width="44" height="150" rx="18"/>
+            </g>
+          </g>
+          <text class="s-dim" x="14" y="24">FRONT</text>
+        </svg>
+        <figcaption>正面（カメラ側）</figcaption>
+      </figure>
+
+      <!-- SIDE VIEW -->
+      <figure class="view" style="margin:0">
+        <svg viewBox="0 0 520 400" role="img" aria-label="側面図">
+          <ellipse class="s-shadow" cx="255" cy="372" rx="210" ry="9"/>
+          <line class="s-ground" x1="10" y1="370" x2="510" y2="370"/>
+          <g class="s-hatch">
+            <line x1="30" y1="370" x2="18" y2="384"/><line x1="70" y1="370" x2="58" y2="384"/><line x1="110" y1="370" x2="98" y2="384"/><line x1="150" y1="370" x2="138" y2="384"/><line x1="190" y1="370" x2="178" y2="384"/><line x1="230" y1="370" x2="218" y2="384"/><line x1="270" y1="370" x2="258" y2="384"/><line x1="310" y1="370" x2="298" y2="384"/><line x1="350" y1="370" x2="338" y2="384"/><line x1="390" y1="370" x2="378" y2="384"/><line x1="430" y1="370" x2="418" y2="384"/><line x1="470" y1="370" x2="458" y2="384"/><line x1="510" y1="370" x2="498" y2="384"/>
+          </g>
+
+          <g class="bodyg mv">
+            <g class="sa0 mv armmv">
+              <rect class="s-arm" x="-24" y="-8" width="48" height="10" rx="2"/>
+              <g class="sa1 mv armmv">
+                <rect class="s-arm" x="-11" y="-125" width="22" height="125" rx="10"/>
+                <g class="sa2 mv armmv">
+                  <rect class="s-arm" x="-10" y="-115" width="20" height="115" rx="9"/>
+                  <g class="sa3 mv armmv">
+                    <rect class="s-servo" x="-9" y="-18" width="18" height="18" rx="3"/>
+                    <path class="s-finger" d="M-7 -18 L-11 -38 M7 -18 L11 -38"/>
+                    <circle class="s-joint" r="9"/>
+                  </g>
+                  <circle class="s-joint" r="11"/>
+                </g>
+                <circle class="s-joint" r="13"/>
+              </g>
+            </g>
+            <rect class="s-body" x="100" y="190" width="300" height="170" rx="14"/>
+            <line class="s-seam" x1="114" y1="330" x2="386" y2="330"/>
+            <line class="s-seam" x1="250" y1="204" x2="250" y2="330"/>
+            <rect class="s-cam" x="398" y="212" width="16" height="40" rx="4"/>
+            <circle class="s-eye" cx="406" cy="232" r="4"/>
+            <rect class="s-lid lid-s mv lidmv" x="190" y="185" width="120" height="9" rx="2"/>
+            <rect class="s-strut" x="130" y="360" width="24" height="10" rx="2"/>
+            <rect class="s-strut" x="346" y="360" width="24" height="10" rx="2"/>
+            <g class="ghost">
+              <circle class="s-ghost" cx="180" cy="290" r="62"/>
+              <circle class="s-ghost" cx="320" cy="290" r="62"/>
+            </g>
+          </g>
+
+          <!-- near-side wheels (in front of body, fade in) -->
+          <g class="sw-r mv wheelmv">
+            <rect class="s-strut" x="180" y="283" width="70" height="14" rx="3"/>
+            <rect class="s-servo" x="168" y="214" width="24" height="18" rx="3"/>
+            <circle class="s-tire" cx="180" cy="290" r="62"/>
+            <circle class="s-rim" cx="180" cy="290" r="38"/>
+            <circle class="s-hub" cx="180" cy="290" r="11"/>
+          </g>
+          <g class="sw-f mv wheelmv">
+            <rect class="s-strut" x="250" y="283" width="70" height="14" rx="3"/>
+            <rect class="s-servo" x="308" y="214" width="24" height="18" rx="3"/>
+            <circle class="s-tire" cx="320" cy="290" r="62"/>
+            <circle class="s-rim" cx="320" cy="290" r="38"/>
+            <circle class="s-hub" cx="320" cy="290" r="11"/>
+          </g>
+          <text class="s-dim" x="14" y="24">SIDE</text>
+          <text class="s-dim" x="440" y="24">FRONT →</text>
+        </svg>
+        <figcaption>側面（右が前）</figcaption>
+      </figure>
+    </div>
+
+    <div class="modeinfo" aria-live="polite">
+      <div class="k" id="mi-k">MODE / WORK</div>
+      <div id="mi-v"></div>
+    </div>
+  </section>
+
+  <!-- ===== Layout decision ===== -->
+  <section>
+    <h2><span class="tag">A</span>まず決めること：車輪は2輪か4輪か</h2>
+    <p class="prose">スケッチは左右に大きな車輪が1つずつの2輪です。どちらでも作れますが、アームを載せてトリックもやるなら、左右に前後2個ずつ並べる4輪ポッドを推奨します。正面から見るとスケッチと同じシルエットになります。</p>
+    <div class="grid2">
+      <div class="opt pick">
+        <span class="badge">推奨 · 4輪ポッド</span>
+        <h3>左右×前後の4ポッド、各ポッドが操舵＋傾斜</h3>
+        <ul>
+          <li>止まっていても自立するので、アーム作業中に重心が動いても倒れない</li>
+          <li>4輪独立操舵で、その場旋回・カニ歩き（真横移動）・前後逆位相の小回りができる</li>
+          <li>キャンバーを付けて旋回中に内側へ傾ける、片側を持ち上げるなどのトリックが可能</li>
+          <li>制御は普通のPIDで成立する。最初に動かすまでが速い</li>
+        </ul>
+      </div>
+      <div class="opt">
+        <span class="badge">上級 · 2輪倒立</span>
+        <h3>スケッチ通りの左右2輪、倒立振子で立つ</h3>
+        <ul>
+          <li>見た目と機動性は最高。ウィリーや段差越えが映える</li>
+          <li>常に姿勢制御が必要で、アームを振ると重心が動き転倒しやすい</li>
+          <li>IMUと1kHz級の制御ループ、モーターのトルク応答が必須（ブラシレス＋FOC推奨）</li>
+          <li>4輪で一通り動かしてから、後ろ2輪を持ち上げる「2輪モード」として追加するのが現実的</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Wheel pod ===== -->
+  <section>
+    <h2><span class="tag">B</span>車輪ポッドの構造</h2>
+    <div class="pod">
+      <svg viewBox="0 0 520 300" role="img" aria-label="車輪ポッドの構造図（正面から）">
+        <defs>
+          <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="8" style="stroke:var(--muted);stroke-width:1.5"/>
+          </pattern>
+        </defs>
+        <line class="s-ground" x1="10" y1="278" x2="510" y2="278"/>
+        <rect x="16" y="30" width="40" height="230" fill="url(#hatch)" style="stroke:var(--ink);stroke-width:1.5"/>
+        <text class="s-dim" x="14" y="22">車体側面</text>
+        <!-- parallel links -->
+        <line x1="56" y1="110" x2="220" y2="110" style="stroke:var(--muted);stroke-width:12;stroke-linecap:round"/>
+        <line x1="56" y1="180" x2="220" y2="180" style="stroke:var(--muted);stroke-width:12;stroke-linecap:round"/>
+        <circle class="s-servo" cx="56" cy="110" r="15"/>
+        <circle class="s-hub" cx="56" cy="180" r="7"/>
+        <circle class="s-hub" cx="220" cy="110" r="7"/>
+        <circle class="s-hub" cx="220" cy="180" r="7"/>
+        <!-- knuckle bracket -->
+        <path d="M220 190 L220 52 L392 52" style="fill:none;stroke:var(--ink);stroke-width:8;stroke-linejoin:round"/>
+        <!-- yaw servo and axis -->
+        <line x1="420" y1="20" x2="420" y2="290" style="stroke:var(--accent);stroke-width:1.5;stroke-dasharray:8 4 2 4"/>
+        <rect class="s-servo" x="392" y="36" width="56" height="32" rx="4"/>
+        <!-- camber servo -->
+        <circle class="s-servo" cx="420" cy="92" r="15"/>
+        <circle class="s-hub" cx="420" cy="92" r="4"/>
+        <!-- fork to motor -->
+        <path d="M420 107 L420 118 L352 118 L352 168" style="fill:none;stroke:var(--ink);stroke-width:7;stroke-linejoin:round"/>
+        <!-- motor -->
+        <rect x="318" y="168" width="78" height="42" rx="6" style="fill:var(--body-2);stroke:var(--ink);stroke-width:1.8"/>
+        <rect x="306" y="176" width="12" height="26" rx="2" class="s-servo"/>
+        <!-- wheel -->
+        <rect class="s-tire" x="396" y="120" width="48" height="156" rx="20"/>
+        <line class="s-rim" x1="411" y1="134" x2="411" y2="262"/>
+        <line class="s-rim" x1="429" y1="134" x2="429" y2="262"/>
+        <!-- callouts -->
+        <g style="font:600 14px var(--f-mono);fill:var(--accent)">
+          <text x="80" y="96">1</text>
+          <text x="462" y="58">2</text>
+          <text x="448" y="98">3</text>
+          <text x="330" y="232">4</text>
+          <text x="458" y="200">5</text>
+        </g>
+        <text class="s-dim" x="430" y="16">ヨー軸</text>
+      </svg>
+      <ol>
+        <li><b>展開サーボ</b>：平行リンクで車輪ポッドを横へ押し出す。左右各1個、前後ポッドはリンクで連動させると数が減る。</li>
+        <li><b>ヨー（操舵）サーボ</b>：±30°程度。軸を接地点に通すと据え切りが軽い。</li>
+        <li><b>キャンバー（傾き）サーボ</b>：±15°程度。旋回時に内側へ傾ける、トリック用。</li>
+        <li><b>DCギヤモーター＋エンコーダ</b>：ホイールの内側に置いて、操舵軸まわりの慣性を小さくする。</li>
+        <li><b>タイヤ</b>：φ120mm前後のゴムタイヤ。グリップが速さと旋回を決める。</li>
+      </ol>
+    </div>
+    <p class="prose">ポッド1個あたりサーボ2個（ヨー、キャンバー）とモーター1個。4ポッドで操舵用サーボが8個になるので、配線が少なく角度フィードバックも取れる<b>シリアルバスサーボ</b>（Feetech STS3215など）をおすすめします。アームのPTK7465 PLUSはPWM制御なので、系統を分けておくと配線もデバッグも楽です。</p>
+  </section>
+
+  <!-- ===== Subsystems ===== -->
+  <section>
+    <h2><span class="tag">C</span>サブシステム構成</h2>
+    <div class="grid4">
+      <div class="sys">
+        <div class="who">DRIVE</div>
+        <h3>足回り</h3>
+        <ul>
+          <li>モーター4個：37mm径ブラシ付きギヤモーター（12V定格・無負荷約500rpm・エンコーダ付き）から始める</li>
+          <li>ドライバ：2ch×20A級を2枚（Cytron MDD20Aなど）</li>
+          <li>操舵＋キャンバー：バスサーボ8個、展開用サーボ2個</li>
+          <li>もっと速さが欲しくなったら、ブラシレスモーター＋FOCドライバに交換</li>
+        </ul>
+      </div>
+      <div class="sys">
+        <div class="who">ARM</div>
+        <h3>ロボットアーム（PTK7465 PLUS×8）</h3>
+        <ul>
+          <li>割り当て例：ベース旋回1、肩2（2個並列でトルク2倍）、肘1、手首ピッチ1、手首ロール1、手首ヨー1、グリッパ1</li>
+          <li>収納時は天板ハッチ下で肩→肘→手首の順に折り畳む</li>
+          <li>リンクはアルミ板＋3Dプリントのブラケット。肩に近いほど軽く作る</li>
+        </ul>
+      </div>
+      <div class="sys">
+        <div class="who">BRAIN</div>
+        <h3>Kakip ＋ リアルタイムマイコン</h3>
+        <ul>
+          <li>Kakip（Renesas RZ/V2H、AIアクセラレータ付き）：カメラ処理、物体検出、モード管理、遠隔操作</li>
+          <li>マイコン（Teensy 4.1など）：1kHzのモーターPID、エンコーダ、IMU、サーボ出力、非常停止</li>
+          <li>両者はUSBシリアルで接続。Kakipが固まってもマイコン側で安全に止まる構成にする</li>
+        </ul>
+      </div>
+      <div class="sys">
+        <div class="who">POWER</div>
+        <h3>電源</h3>
+        <ul>
+          <li>4S LiPo（14.8V・5000mAh前後）を車体の一番下に置いて重心を下げる</li>
+          <li>メインヒューズ＋物理キルスイッチ → モータードライバへ直結</li>
+          <li>DC-DC降圧を系統ごとに分ける：アームサーボ用、バスサーボ用（7.4V）、Kakip用5V</li>
+          <li>サーボの突入電流でKakipがリセットしないよう、ロジック系は必ず別系統</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Sizing ===== -->
+  <section>
+    <h2><span class="tag">D</span>ざっくり見積もり</h2>
+    <p class="prose">数字は仮置きです。実際の重量とPTK7465 PLUSのデータシート値で必ず計算し直してください。</p>
+    <div class="calc">本体寸法（目安）  L420 × W280 × H240 mm、総重量 約6 kg
+
+■ 走行速度
+  目標 3 m/s、タイヤ φ120 mm
+  回転数 = 3 ÷ (π × 0.12) × 60 ≒ 480 rpm   → 無負荷500 rpm級のモーターで届く
+
+■ モーター1個あたりのトルク
+  加速 3 m/s² のとき  F = 6 kg × 3 = 18 N（4輪で分担 → 4.5 N/輪）
+  T = 4.5 N × 0.06 m ≒ 0.27 N·m ≒ 2.8 kg·cm
+  トリック・段差・転がり抵抗の余裕で ×3 → 1個あたり 8〜10 kg·cm 程度を確保
+
+■ アーム肩トルク（リーチ35 cm）
+  アーム自重 0.8 kg × 重心15 cm ＋ 把持物 0.3 kg × 35 cm
+  = 12 + 10.5 ≒ 22.5 kg·cm、安全率2で 45 kg·cm
+  → 1個で足りなければ肩を2個並列にする（上の割り当て例）</div>
+  </section>
+
+  <!-- ===== System diagram ===== -->
+  <section>
+    <h2><span class="tag">E</span>制御システム</h2>
+    <div class="mermaid-box">
+<pre class="mermaid">
+flowchart LR
+  CAM[正面カメラ] --> K
+  PAD[ゲームパッド / PC] -- Wi-Fi --> K
+  K["Kakip<br/>Ubuntu + ROS 2<br/>物体検出・モード管理"] -- USBシリアル 100Hz --> M
+  M["マイコン Teensy 4.1<br/>1kHz制御・監視"]
+  M -- PWM --> ARM["アーム PTK7465 PLUS ×8"]
+  M -- PWM --> DEP["展開サーボ ×2 / ハッチ ×1"]
+  M -- 半二重UART --> BUS["操舵・キャンバー バスサーボ ×8"]
+  M -- PWM/DIR --> DRV["モータードライバ ×2"] --> MOT["DCモーター ×4"]
+  MOT -- エンコーダ --> M
+  IMU[IMU] --> M
+  ESTOP[非常停止] --> M
+</pre>
+    </div>
+    <div class="mermaid-box">
+<pre class="mermaid">
+stateDiagram-v2
+  direction LR
+  [*] --> 収納
+  収納 --> 展開中: 走行モード要求（停止中のみ）
+  展開中 --> 走行: ポッド展開・車高上げ完了
+  走行 --> アーム展開中: 作業モード要求（停止中のみ）
+  アーム展開中 --> 作業: ハッチ開・アーム起立
+  作業 --> 走行: アーム格納
+  走行 --> 収納: ポッド格納
+  走行 --> 非常停止: 異常
+  作業 --> 非常停止: 異常
+</pre>
+    </div>
+    <p class="prose">変形は必ず「停止中」に限定し、順番（ハッチ→アーム、アーム→車輪）をマイコン側のステートマシンで強制してください。アームが出たまま車輪を格納する、といった干渉事故を仕組みで防げます。</p>
+  </section>
+
+  <!-- ===== Parts ===== -->
+  <section>
+    <h2><span class="tag">F</span>部品リスト（初版の目安）</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>系統</th><th>部品</th><th>数量</th><th>メモ</th></tr></thead>
+        <tbody>
+          <tr><td class="grp">アーム</td><td>PTK7465 PLUS</td><td class="q">8</td><td>電圧・ストール電流・PWM幅を要確認</td></tr>
+          <tr><td class="grp">足回り</td><td>37mm ギヤモーター（エンコーダ付き）</td><td class="q">4</td><td>12V定格・約500rpm・ストール10kg·cm級</td></tr>
+          <tr><td></td><td>モータードライバ 2ch 20A級</td><td class="q">2</td><td>Cytron MDD20A など</td></tr>
+          <tr><td></td><td>バスサーボ（操舵・キャンバー）</td><td class="q">8</td><td>Feetech STS3215 など＋通信アダプタ</td></tr>
+          <tr><td></td><td>展開用サーボ（高トルク）</td><td class="q">2</td><td>左右各1、前後はリンク連動</td></tr>
+          <tr><td></td><td>ハッチ用小型サーボ</td><td class="q">1</td><td>天板の開閉</td></tr>
+          <tr><td></td><td>タイヤ φ120mm＋ハブ</td><td class="q">4</td><td>モーター軸径に合うハブ</td></tr>
+          <tr><td class="grp">制御</td><td>Kakip</td><td class="q">1</td><td>上位処理・カメラ・AI</td></tr>
+          <tr><td></td><td>Teensy 4.1（または STM32 Nucleo）</td><td class="q">1</td><td>リアルタイム制御</td></tr>
+          <tr><td></td><td>IMU（BNO085 など）</td><td class="q">1</td><td>姿勢・旋回制御</td></tr>
+          <tr><td></td><td>カメラ</td><td class="q">1</td><td>最初はUSBカメラ（UVC）が確実</td></tr>
+          <tr><td class="grp">電源</td><td>4S LiPo 5000mAh</td><td class="q">1</td><td>LiPo用セーフティバッグで充電</td></tr>
+          <tr><td></td><td>DC-DC降圧（サーボ用 20A級）</td><td class="q">2</td><td>アーム系／バスサーボ系で分ける</td></tr>
+          <tr><td></td><td>DC-DC 5V（Kakip用）</td><td class="q">1</td><td>Kakipの電源仕様に合わせる</td></tr>
+          <tr><td></td><td>ヒューズ・キルスイッチ・XT60</td><td class="q">一式</td><td>非常停止は手の届く位置に</td></tr>
+          <tr><td class="grp">構造</td><td>アルミフレーム＋3Dプリント部品</td><td class="q">一式</td><td>天板ハッチ、側面ウェル、ポッドのリンク</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Steps ===== -->
+  <section>
+    <h2><span class="tag">G</span>製作の進め方</h2>
+    <ol class="steps">
+      <li><div><b>データ確認と見積もり</b><span>PTK7465 PLUSの電圧・トルク・電流、Kakipの電源とカメラ仕様を確認し、Dの計算を実数でやり直す。</span></div></li>
+      <li><div><b>ポッドを1個だけ作る</b><span>モーター＋ヨー＋キャンバーの1ポッドを机上で動かし、速度・トルク・操舵の剛性を確かめる。</span></div></li>
+      <li><div><b>シャーシと4ポッド、展開機構</b><span>まず固定式（展開なし）で4輪を走らせ、そのあと展開リンクを足す。</span></div></li>
+      <li><div><b>マイコンのファームウェア</b><span>モーターPID、操舵、展開シーケンス、ウォッチドッグ（指令が200ms途切れたら停止）、非常停止。</span></div></li>
+      <li><div><b>Kakipとつなぐ</b><span>ROS 2でゲームパッド遠隔走行。カメラ映像をPCに飛ばして確認。</span></div></li>
+      <li><div><b>アームを単体で作る</b><span>机に固定して逆運動学と折り畳み動作を作る。肩トルクが足りるかここで判断。</span></div></li>
+      <li><div><b>統合とモード遷移</b><span>アームを車体に載せ、収納→走行→作業の遷移と干渉をチェック。</span></div></li>
+      <li><div><b>AIとトリック</b><span>Kakipで物体検出→把持。4輪操舵の逆位相・同位相、キャンバー旋回、2輪ウィリーに挑戦。</span></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="warn">
+      <h3>確認が必要なこと</h3>
+      <ul>
+        <li><b>PTK7465 PLUSの仕様</b>：ネットでは型番の公式データシートを見つけられませんでした。手元の資料で動作電圧、ストールトルク、ストール電流、PWMパルス幅を確認してください。8個同時のストール電流で電源の容量が決まります。</li>
+        <li><b>Kakipのカメラ</b>：MIPI CSIコネクタが4つありますが、Raspberry Piカメラとの互換性は発表時点の情報です。最初はUSBカメラで始めると確実です。</li>
+        <li><b>安全</b>：高トルクのモーターとアームは指を挟めます。最初の通電は車輪を浮かせ、キルスイッチを手元に置いて行ってください。</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var info = {
+    stowed: ['MODE / STOWED', '箱型の待機・運搬モード。車輪ポッドは側面のウェル内（点線）、アームは天板ハッチの下で折り畳まれている。車体はスキッドで接地。'],
+    drive: ['MODE / DRIVE', '展開サーボでポッドが左右へ張り出し、車高が30mm上がる。ヨー操舵で4輪操舵、キャンバーで旋回時に車輪を内側へ傾ける（図は傾けた状態）。'],
+    work: ['MODE / WORK', '走行姿勢のまま天板ハッチが開き、PTK7465 PLUS×8のアームが起立。正面カメラの映像からKakipが対象を検出して把持する。']
+  };
+  var timers = [];
+  function set(m) {
+    stage.setAttribute('data-mode', m);
+    document.querySelectorAll('.seg button').forEach(function (b) {
+      b.setAttribute('aria-pressed', b.dataset.m === m ? 'true' : 'false');
+    });
+    document.getElementById('mi-k').textContent = info[m][0];
+    document.getElementById('mi-v').textContent = info[m][1];
+  }
+  function clear() { timers.forEach(clearTimeout); timers = []; }
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () { clear(); set(b.dataset.m); });
+  });
+  document.getElementById('play').addEventListener('click', function () {
+    clear(); set('stowed');
+    timers.push(setTimeout(function () { set('drive'); }, 2800));
+    timers.push(setTimeout(function () { set('work'); }, 5000));
+  });
+  set('work');
+})();
+</script>
