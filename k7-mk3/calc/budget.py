@@ -112,8 +112,8 @@ def loop4():
     layouts = {
         "Mk-III as drawn (battery/Kakip centred-front)": {"arms": (arm, 0.165), "wheel modules": (wheel, AXLE_Z), "deploy": (240, 0.03),
             "frame": (600, 0), "Kakip": (100, 0.08), "MCU/drivers": (120, 0.05), "battery": (330, 0), "wiring": (200, 0), "payload": (300, 0)},
-        "rear electronics: battery z-100, Kakip z-80, MCU z-50": {"arms": (arm, 0.165), "wheel modules": (wheel, AXLE_Z), "deploy": (240, 0.03),
-            "frame": (600, 0), "Kakip": (100, -0.08), "MCU/drivers": (120, -0.05), "battery": (330, -0.10), "wiring": (200, 0), "payload": (300, 0)},
+        "rear electronics: battery z-86, Kakip z-80, MCU z-50": {"arms": (arm, 0.165), "wheel modules": (wheel, AXLE_Z), "deploy": (240, 0.03),
+            "frame": (600, 0), "Kakip": (100, -0.08), "MCU/drivers": (120, -0.05), "battery": (330, -0.086), "wiring": (200, 0), "payload": (300, 0)},
     }
     print("FORE/AFT CG IN STANCE (axle at z=%+.0f mm, CG height above axle %.0f mm)" % (AXLE_Z * 1000, H_CG * 1000))
     for n, comp in layouts.items():
@@ -123,3 +123,48 @@ def loop4():
 
 if __name__ == "__main__":
     loop4()
+
+
+# ================= Loop 5: internal packaging (AABB interference) =================
+# boxes: name -> (cx, cy, cz, sx, sy, sz) in body frame (m); x right/left, y up, z forward
+INTERNAL = {
+    "battery 2S 3000mAh #1": (0, -0.075, -0.096, 0.105, 0.035, 0.018),
+    "battery 2S 3000mAh #2": (0, -0.075, -0.076, 0.105, 0.035, 0.018),
+    "Kakip (vertical, behind bay)": (0, 0.07, -0.092, 0.085, 0.056, 0.022),
+    "MCU + power board": (0, -0.005, -0.03, 0.09, 0.012, 0.06),
+    "camera module": (0, 0.034, 0.09, 0.04, 0.04, 0.025),
+    "ToF L": (-0.03, -0.085, 0.098, 0.015, 0.01, 0.01),
+    "ToF R": (0.03, -0.085, 0.098, 0.015, 0.01, 0.01),
+    "slide stepper L": (-0.035, 0.04, 0.0, 0.028, 0.028, 0.034),
+    "slide stepper R": (0.035, 0.04, 0.0, 0.028, 0.028, 0.034),
+    "IMU": (0, -0.04, 0.0, 0.02, 0.005, 0.02),
+}
+KEEP_OUT = {
+    "ring bay L (stowed ring)": (-0.0865, 0, 0, 0.040, 0.215, 0.215),
+    "ring bay R (stowed ring)": (0.0865, 0, 0, 0.040, 0.215, 0.215),
+    "cargo bay (50 mm deep)": (0, 0.09, 0, 0.12, 0.05, 0.13),
+    "shell walls (inner limit)": None,
+}
+INNER = (0.10, 0.105, 0.105)   # half extents available inside the shell
+
+def overlap(a, b):
+    return all(abs(a[i] - b[i]) * 2 < (a[i + 3] + b[i + 3]) for i in range(3))
+
+def loop5():
+    print("PACKAGING CHECK")
+    bad = 0
+    items = list(INTERNAL.items())
+    for i, (n, a) in enumerate(items):
+        for k in range(3):
+            if abs(a[k]) + a[k + 3] / 2 > INNER[k] + 1e-9:
+                print(f"  OUTSIDE SHELL: {n} axis {'xyz'[k]}"); bad += 1
+        for m, b in items[i + 1:]:
+            if overlap(a, b): print(f"  CLASH: {n} <-> {m}"); bad += 1
+        for m, b in KEEP_OUT.items():
+            if b and overlap(a, b): print(f"  CLASH: {n} <-> {m}"); bad += 1
+    bz = (INTERNAL["battery 2S 3000mAh #1"][2] + INTERNAL["battery 2S 3000mAh #2"][2]) / 2
+    print(f"  battery centre z = {bz * 1000:.0f} mm (Loop 4 assumed -100 mm)")
+    print("  result:", "OK, no clashes" if not bad else f"{bad} problem(s)")
+
+if __name__ == "__main__":
+    loop5()

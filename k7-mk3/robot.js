@@ -212,7 +212,7 @@ rbox(BW - 0.02, 0.14, BL - 0.01, 0.035, M.gun, chassis, 0, -0.04, 0);       // l
 });
 rbox(0.12, 0.1, 0.044, 0.01, M.gun, chassis, 0, 0.06, 0.088);   // front block of the well
 rbox(0.12, 0.1, 0.044, 0.01, M.gun, chassis, 0, 0.06, -0.088);  // rear block
-var well = mesh(new T.PlaneGeometry(0.12, 0.13), M.dark, chassis, 0, 0.031, 0); well.rotation.x = -Math.PI / 2;
+var well = mesh(new T.PlaneGeometry(0.12, 0.13), M.dark, chassis, 0, 0.065, 0); well.rotation.x = -Math.PI / 2;
 // top frame around the well
 rbox(BW - 0.004, 0.012, 0.05, 0.005, M.ceramic, chassis, 0, TOP - 0.004, 0.088);
 rbox(BW - 0.004, 0.012, 0.05, 0.005, M.ceramic, chassis, 0, TOP - 0.004, -0.088);
@@ -244,6 +244,29 @@ var beaconGlow = glowSprite(0xff2a1a, 0.07, chassis, -0.085, TOP + 0.158, -0.09)
 [[0.07, 0.08, 'f'], [-0.07, 0.08, 'f'], [0.07, -0.08, 'r'], [-0.07, -0.08, 'r']].forEach(function (p) {
   var k = rbox(0.026, 0.008, 0.04, 0.003, M.rubber, chassis, p[0], -BH / 2 - 0.002, p[1]); contact(k, 0.004, p[2]);
 });
+
+/* ---------- internals (Loop 5 packaging, see calc/budget.py) ---------- */
+var IM = {
+  batt: new T.MeshStandardMaterial({ color: 0x2b5d8a, emissive: 0x2b5d8a, emissiveIntensity: 0.6, roughness: 0.5 }),
+  pcb: new T.MeshStandardMaterial({ color: 0x1f5d3a, emissive: 0x2f9d5a, emissiveIntensity: 0.6, roughness: 0.6 }),
+  chip: new T.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 })
+};
+var internals = grp(chassis);
+[[0, -0.075, -0.096, 0.105, 0.035, 0.018, 'batt'], [0, -0.075, -0.076, 0.105, 0.035, 0.018, 'batt'],
+ [0, 0.07, -0.092, 0.085, 0.056, 0.004, 'pcb'], [0, -0.005, -0.03, 0.09, 0.004, 0.06, 'pcb'],
+ [0, -0.04, 0, 0.02, 0.005, 0.02, 'chip'], [-0.03, -0.085, 0.098, 0.015, 0.01, 0.01, 'chip'], [0.03, -0.085, 0.098, 0.015, 0.01, 0.01, 'chip']
+].forEach(function (b) { mesh(new T.BoxGeometry(b[3], b[4], b[5]), IM[b[6]], internals, b[0], b[1], b[2]); });
+rbox(0.06, 0.04, 0.016, 0.003, M.steel, internals, 0, 0.07, -0.08);            // Kakip heatsink
+rbox(0.04, 0.04, 0.025, 0.004, IM.chip, internals, 0, 0.034, 0.09);            // camera module
+[-1, 1].forEach(function (s) { cyl(0.014, 0.014, 0.034, M.dark, internals, s * 0.035, 0.04, 0).rotation.x = Math.PI / 2; }); // slide steppers
+internals.visible = false;
+var SHELL = [M.ceramic, M.gun, M.red];
+function setXray(on) {
+  SHELL.forEach(function (m) { m.transparent = on; m.opacity = on ? 0.18 : 1; m.depthWrite = !on; m.needsUpdate = true; });
+  internals.visible = on;
+}
+var xb = document.getElementById('xray');
+if (xb) xb.addEventListener('click', function () { var on = xb.getAttribute('aria-pressed') !== 'true'; xb.setAttribute('aria-pressed', on ? 'true' : 'false'); setXray(on); });
 
 /* ---------- hubless wheels ---------- */
 var RO = 0.105, RIN = 0.072, RW = 0.032, LINK = 0.07;
