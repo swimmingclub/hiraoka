@@ -246,7 +246,7 @@ var beaconGlow = glowSprite(0xff2a1a, 0.07, chassis, -0.085, TOP + 0.158, -0.09)
 });
 
 /* ---------- hubless wheels ---------- */
-var RO = 0.105, RIN = 0.072, RW = 0.032;
+var RO = 0.105, RIN = 0.072, RW = 0.032, LINK = 0.07;
 function lathe(pts) { var g = new T.LatheGeometry(pts.map(function (p) { return new T.Vector2(p[0], p[1]); }), 96); g.rotateZ(Math.PI / 2); return g; }
 var rimGeo = lathe([[RIN, -0.013], [0.09, -0.013], [0.09, 0.013], [RIN, 0.013], [RIN, -0.013]]);
 var tirePts = [[0.088, -RW / 2]], rr = 0.01;
@@ -289,9 +289,10 @@ var wheels = [];
   var rods = [-1, 1].map(function (z) {
     return { z: z * 0.03, rod: mesh(new T.CylinderGeometry(0.0055, 0.0055, 1, 12), M.steel, chassis) };
   });
-  var stage = rbox(0.022, 1, 0.07, 0.004, M.gun, chassis); stage.geometry = new T.BoxGeometry(0.022, 1, 0.07);
+  var stage = mesh(new T.BoxGeometry(0.014, 1, 0.022), M.gun, chassis);
+  var pivotBox = rbox(0.03, 0.03, 0.03, 0.005, M.dark, chassis);
   contact(camber, RO, 'r', true);
-  wheels.push({ s: s, root: root, steer: steer, camber: camber, spin: spin, pt: gimbalPt, rods: rods, stage: stage, dy: 0, ang: 0 });
+  wheels.push({ s: s, root: root, steer: steer, camber: camber, spin: spin, pt: gimbalPt, rods: rods, stage: stage, pivot: pivotBox, dy: 0, ang: 0 });
 });
 
 /* ---------- arms ---------- */
@@ -310,23 +311,26 @@ function halfJaw(parent, sgn, R) {
   for (var i = 0; i < 3; i++) rbox(0.018, 0.005, 0.005, 0.002, M.brass, j, 0, R - 0.016 + i * 0.016, sgn * 0.003);
   return j;
 }
-var AL1 = 0.19, AL2 = 0.19, JR = 0.03;
+var AL1 = 0.065, AL2 = 0.065, BALL = 0.012;
 var arms = [];
 [-1, 1].forEach(function (s) {
   var root = grp(chassis, s * 0.075, -0.045, BL / 2 + 0.03), yaw = grp(root);
   rbox(0.05, 0.05, 0.022, 0.008, M.gun, chassis, s * 0.075, -0.045, BL / 2 + 0.012);
   servoBox(yaw);
   var pitch = grp(yaw);
-  [-1, 1].forEach(function (k) { var p = plateLink(AL1, 0.032, 0.005, 3, M.gun); p.rotation.y = Math.PI / 2; p.position.x = k * 0.018; p.castShadow = true; pitch.add(p); });
-  rbox(0.026, 0.11, 0.02, 0.008, M.ceramic, pitch, 0, AL1 / 2, 0);
+  [-1, 1].forEach(function (k) { var p = plateLink(AL1, 0.03, 0.005, 1, M.gun); p.rotation.y = Math.PI / 2; p.position.x = k * 0.018; p.castShadow = true; pitch.add(p); });
+  rbox(0.024, 0.03, 0.018, 0.007, M.ceramic, pitch, 0, AL1 / 2, 0);
   var elbow = grp(pitch, 0, AL1, 0); servoBox(elbow);
-  [-1, 1].forEach(function (k) { var p = plateLink(AL2, 0.028, 0.005, 3, M.gun); p.rotation.y = Math.PI / 2; p.position.x = k * 0.016; p.castShadow = true; elbow.add(p); });
-  rbox(0.022, 0.1, 0.018, 0.007, M.red, elbow, 0, AL2 / 2, 0);
+  [-1, 1].forEach(function (k) { var p = plateLink(AL2, 0.028, 0.005, 1, M.gun); p.rotation.y = Math.PI / 2; p.position.x = k * 0.016; p.castShadow = true; elbow.add(p); });
+  rbox(0.02, 0.028, 0.016, 0.006, M.red, elbow, 0, AL2 / 2, 0);
   var wrist = grp(elbow, 0, AL2, 0); servoBox(wrist);
   rbox(0.02, 0.026, 0.026, 0.005, M.gun, wrist, 0, 0.022, 0);
-  var jh = grp(wrist, 0, 0.035, 0), jA = halfJaw(jh, 1, JR), jB = halfJaw(jh, -1, JR);
-  var center = grp(jh, 0, JR, 0);
-  contact(center, JR + 0.009, 'f'); center.userData.k = s > 0 ? 'l' : 'r';
+  cyl(0.017, 0.013, 0.014, M.dark, wrist, 0, 0.03, 0);                       // caster housing
+  var ball = mesh(new T.SphereGeometry(BALL, 24, 16), M.steel, wrist, 0, 0.035 + 0.004, 0);
+  var jA = grp(wrist, 0, 0.026, 0.013), jB = grp(wrist, 0, 0.026, -0.013);    // mini claws for light items
+  rbox(0.006, 0.026, 0.004, 0.0015, M.brass, jA, 0, 0.013, 0); rbox(0.006, 0.026, 0.004, 0.0015, M.brass, jB, 0, 0.013, 0);
+  var center = grp(wrist, 0, 0.035 + 0.004, 0);
+  contact(center, BALL, 'f'); center.userData.k = s > 0 ? 'l' : 'r';
   cable(chassis, [[s * 0.1, -0.02, BL / 2 + 0.005], [s * 0.11, -0.03, BL / 2 + 0.03], [s * 0.095, -0.045, BL / 2 + 0.035]], 0.003, s > 0 ? M.cableY : M.cableR);
   arms.push({ yaw: yaw, pitch: pitch, elbow: elbow, wrist: wrist, jA: jA, jB: jB, center: center });
 });
@@ -339,33 +343,34 @@ function crate(parent, sz) {
   rbox(sz * 0.16, sz * 0.82, sz * 1.02, 0.003, M.red, g);
   return g;
 }
-var cargo = crate(scene, 0.06); cargo.position.set(0.32, 0.024, 0.36);
+var cargo = crate(scene, 0.035); cargo.position.set(0.25, 0.014, 0.42);
 var spare = crate(scene, 0.12); spare.position.set(-0.7, 0.048, -0.6); spare.rotation.y = 0.5;
 var spare2 = crate(scene, 0.09); spare2.position.set(-0.62, 0.036, -0.42); spare2.rotation.y = -0.3;
 /* ---------- poses ---------- */
-var ARM_READY = { l1: -0.1, l2: 2.05, l3: 0.45, ly: 0.2, r1: -0.1, r2: 2.05, r3: 0.45, ry: 0.2, lp: 0, rp: 0 };
+var ARM_READY = { l1: 1.0, l2: 1.2, l3: 0.5, ly: 0.15, r1: 1.0, r2: 1.2, r3: 0.5, ry: 0.15, lp: 0, rp: 0 };
 function P() {
   var b = { d: 1, pitch: 0, roll: 0, level: 0, wob: 0, camber: 0, steer: 0, spin: 0, orbit: 0, lid: 0,
-    l1: 0.7, l2: 2.0, l3: 0.3, lj: 0, ly: 0.5, lp: 1, r1: 0.7, r2: 2.0, r3: 0.3, rj: 0, ry: 0.5, rp: 1 };
+    l1: 1.833, l2: 1.838, l3: -0.53, lj: 0, ly: 0.15, lp: 1, r1: 1.833, r2: 1.838, r3: -0.53, rj: 0, ry: 0.15, rp: 1 };
   for (var i = 0; i < arguments.length; i++) for (var k in arguments[i]) b[k] = arguments[i][k];
   return b;
 }
 var POSES = {
   stance: P(),
   balance: P(ARM_READY, { wob: 1 }),
-  turn: P({ roll: -0.16, camber: 0.2, steer: 0.2, orbit: 1, ly: 0.25, l1: 0.75, ry: 0.85, r1: 0.6 }),
-  stow: P({ d: 0, level: 1, lp: 0, rp: 0, l1: 0, l2: 3.05, l3: 3.0, ly: 0, r1: 0, r2: 3.05, r3: 3.0, ry: 0 }),
+  turn: P({ roll: -0.16, camber: 0.2, steer: 0.2, orbit: 1, ly: 0.1, ry: 0.45 }),
+  stow: P({ d: 0, level: 1, lp: 0, rp: 0, l1: 0, l2: 3.1, l3: 3.1, ly: 0, r1: 0, r2: 3.1, r3: 3.1, ry: 0 }),
   carry: P(ARM_READY, { d: 0, level: 1 })
 };
-var CARRY_SEQ = [
-  { p: P(ARM_READY, { d: 0, level: 1, lid: 1.8, l1: 0.8, l2: 1.5, l3: 0.5, lj: 0.9, ly: 0.35 }) },
-  { p: P(ARM_READY, { d: 0, level: 1, lid: 1.8, l1: 0.8, l2: 1.5, l3: 0.5, lj: 0, ly: 0.35 }), ev: 'grab' },
-  { p: P(ARM_READY, { d: 0, level: 1, lid: 1.8, l1: 0.15, l2: 0.6, l3: 0.6, ly: 0.2 }) },
-  { p: P(ARM_READY, { d: 0, level: 1, lid: 1.8, l1: 0.095, l2: -1.225, l3: -2.01, ly: 0.507 }) },
-  { p: P(ARM_READY, { d: 0, level: 1, lid: 1.8, l1: 0.095, l2: -1.225, l3: -2.01, ly: 0.507, lj: 0.9 }), ev: 'release' },
+var CARRY_SEQ = [ // grounded: pick a light item, show it to the camera, put it back
+  { p: P(ARM_READY, { d: 0, level: 1, l1: 1.045, l2: 1.55, l3: 0.547, lj: 0.9, ly: 0.1 }) },
+  { p: P(ARM_READY, { d: 0, level: 1, l1: 1.045, l2: 1.55, l3: 0.547, lj: 0, ly: 0.1 }), ev: 'grab' },
+  { p: P(ARM_READY, { d: 0, level: 1, l1: 1.48, l2: -1.6, l3: 1.69, ly: -0.7 }) },
+  { p: P(ARM_READY, { d: 0, level: 1, l1: 1.48, l2: -1.6, l3: 1.69, ly: -0.7 }) },
+  { p: P(ARM_READY, { d: 0, level: 1, l1: 1.045, l2: 1.55, l3: 0.547, ly: 0.1 }) },
+  { p: P(ARM_READY, { d: 0, level: 1, l1: 1.045, l2: 1.55, l3: 0.547, lj: 0.9, ly: 0.1 }), ev: 'release' },
   { p: P(ARM_READY, { d: 0, level: 1 }) }
 ];
-var LABEL = { stance: 'STANCE — 2輪＋アーム補助輪', balance: 'BALANCE — 2輪倒立', turn: 'TURN — アーム接地キャンバー旋回', stow: 'STOW — 全格納', carry: 'CARRY — 着地して積み込み' };
+var LABEL = { stance: 'STANCE — 2輪＋アーム補助輪', balance: 'BALANCE — 2輪倒立', turn: 'TURN — アーム接地キャンバー旋回', stow: 'STOW — 全格納', carry: 'LAND — 着地してアーム作業' };
 
 /* ---------- kinematics + grounding ---------- */
 function smooth(t) { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
@@ -381,7 +386,7 @@ function apply(p, t) {
     var k = e[0], a = e[1];
     a.yaw.rotation.y = (k === 'l' ? 1 : -1) * p[k + 'y'];
     var o = plant[k]; a.pitch.rotation.x = p[k + '1'] + o - wob * 0.05; a.elbow.rotation.x = p[k + '2']; a.wrist.rotation.x = p[k + '3'] - o;
-    a.jA.rotation.x = p[k + 'j'] * 0.9; a.jB.rotation.x = -p[k + 'j'] * 0.9;
+    a.jA.rotation.x = p[k + 'j'] * 0.6; a.jB.rotation.x = -p[k + 'j'] * 0.6;
   });
   var slide = smooth(p.d / 0.6), out = smooth((p.d - 0.6) / 0.4);
   if (p.d < 0.9) wheels.forEach(function (w) { w.dy *= 0.9; });
@@ -391,7 +396,8 @@ function apply(p, t) {
   for (var it = 0; it < 5; it++) {
     chassis.rotation.set(p.pitch + wob * 0.035 + corr * p.level, 0, p.roll);
     wheels.forEach(function (w) {
-      w.root.position.set(w.s * (0.087 + 0.068 * slide), -0.045 * out + w.dy * out, 0);
+      var yy = Math.max(-0.068, Math.min(0, (-0.06 + w.dy) * out)), th = Math.asin(-yy / LINK);
+      w.root.position.set(w.s * (0.087 + 0.068 * slide), yy, LINK * (1 - Math.cos(th)));
       w.steer.rotation.y = p.steer * out; w.camber.rotation.z = -p.camber * out;
     });
     robot.updateMatrixWorld(true);
@@ -416,8 +422,9 @@ function apply(p, t) {
   robot.position.y = -m; robot.updateMatrixWorld(true);
   wheels.forEach(function (w) { // lateral slide rails + short vertical stage
     w.pt.getWorldPosition(tmp); chassis.worldToLocal(tmp);
-    w.rods.forEach(function (r) { orient(r.rod, new T.Vector3(w.s * 0.05, 0.0, r.z), new T.Vector3(tmp.x, 0.0, r.z)); });
-    orient(w.stage, new T.Vector3(tmp.x, 0.03, 0), new T.Vector3(tmp.x, Math.min(tmp.y, 0.0), 0));
+    w.rods.forEach(function (r) { orient(r.rod, new T.Vector3(w.s * 0.05, 0.04, r.z), new T.Vector3(tmp.x, 0.04, r.z)); });
+    var pv = new T.Vector3(tmp.x, 0.04, w.root.position.z + LINK * Math.cos(Math.asin(Math.min(1, -w.root.position.y / LINK))));
+    w.pivot.position.copy(pv); orient(w.stage, pv, tmp.clone());
   });
 }
 
@@ -434,13 +441,13 @@ function placeCrate() {
   scene.attach(cargo);
   var save = corr, sdy = wheels.map(function (w) { return w.dy; });
   apply(CARRY_SEQ[0].p, 0); arms[1].center.getWorldPosition(tmp);
-  cargo.position.set(tmp.x, 0.024, tmp.z); cargo.quaternion.setFromEuler(new T.Euler(0, heading, 0));
+  cargo.position.set(tmp.x, 0.014, tmp.z); cargo.quaternion.setFromEuler(new T.Euler(0, heading, 0));
   corr = save; wheels.forEach(function (w, i) { w.dy = sdy[i]; }); apply(cur, 0);
 }
 function fire(ev) {
   if (ev === 'place') placeCrate();
   if (ev === 'grab') arms[1].center.attach(cargo);
-  if (ev === 'release') { chassis.attach(cargo); drop = { t0: performance.now() / 1000, p0: cargo.position.clone(), q0: cargo.quaternion.clone() }; }
+  if (ev === 'release') { scene.attach(cargo); drop = { t0: performance.now() / 1000, p0: cargo.position.clone(), q0: cargo.quaternion.clone(), to: new T.Vector3(cargo.position.x, 0.014, cargo.position.z), qt: new T.Quaternion().setFromEuler(new T.Euler(0, heading, 0)) }; }
 }
 function go(m) {
   if (seq.length && mode === 'carry' && seq.length > 1) return;
@@ -452,7 +459,7 @@ function go(m) {
   mode = m; setUI(m);
   if (reduce) {
     list.forEach(function (s) { cur = s.p; apply(cur, 0); if (s.ev) fire(s.ev); });
-    if (drop) { cargo.position.copy(slot.position); cargo.quaternion.identity(); drop = null; }
+    if (drop) { cargo.position.copy(drop.to); cargo.quaternion.copy(drop.qt); drop = null; }
     seq = []; return;
   }
   seq = list; segFrom = cur; segStart = performance.now() / 1000;
@@ -476,7 +483,7 @@ function frame() {
   }
   if (drop) {
     var dd = Math.min(1, (now - drop.t0) / 0.6);
-    cargo.position.lerpVectors(drop.p0, slot.position, dd * dd); cargo.quaternion.copy(drop.q0).slerp(new T.Quaternion(), dd);
+    cargo.position.lerpVectors(drop.p0, drop.to, dd * dd); cargo.quaternion.copy(drop.q0).slerp(drop.qt, dd);
     if (dd >= 1) drop = null;
   }
   if (!visible && !first) return;
