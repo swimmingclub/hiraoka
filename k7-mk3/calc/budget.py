@@ -26,14 +26,21 @@ PAYLOAD = 300
 m_robot = sum(MASS.values()) / 1000
 m_total = m_robot + PAYLOAD / 1000
 
-# ---------------- arm load when used as outrigger ----------------
-ARM_SELF_KG, ARM_CG_M = 0.30, 0.13     # arm beyond the shoulder (incl. elbow/wrist servos)
-SHARE = 0.25                           # worst-case share of robot weight on one arm tip
-F_tip = SHARE * m_total * G
-def shoulder_nm(tip_horiz_m):
-    return F_tip * tip_horiz_m + ARM_SELF_KG * G * ARM_CG_M
-poses = {"Mk-III stance (tip 0.26 m ahead)": 0.26, "A5: forearm vertical (tip 0.12 m ahead)": 0.12}
-
+# ---------------- arm as outrigger (main role) ----------------
+PTK_STALL_KGCM = 7.5                    # user-provided stall torque
+CONT_RULE, PEAK_RULE = 1 / 3, 0.8       # design rule: continuous <= 1/3 stall, transient <= 80%
+L_AX_TIP = 0.175                        # axle -> arm tip, horizontal (m)
+H_CG = 0.05                             # CG above axle (m)
+cases = {
+    "steady light touch (controller holds 1 N/arm)": 2 * 1.0,
+    "tilt 10 deg, balance off": m_total * G * H_CG * math.sin(math.radians(10)) / L_AX_TIP,
+    "full lean, CG 50 mm ahead of axle": m_total * G * 0.05 / L_AX_TIP,
+}
+ARMS = {  # name: (upper, fore, shoulder->tip horiz, elbow->load-line offset, arm mass beyond shoulder kg, its CG m)
+    "Mk-III arm 190+190 mm, knee posture": (0.19, 0.19, 0.12, 0.17, 0.30, 0.13),
+    "small arm 65+65 mm, strut posture": (0.065, 0.065, 0.03, 0.038, 0.20, 0.05),
+}
+def kgcm(nm): return nm / G * 100
 # ---------------- ring drive for balancing ----------------
 R_RING, R_GEAR, R_PINION, ETA = 0.105, 0.072, 0.008, 0.85
 ratio = R_GEAR / R_PINION
@@ -67,9 +74,15 @@ if __name__ == "__main__":
     print("MASS (g)")
     for k, v in MASS.items(): line(k, v)
     line("robot total", f"{m_robot:.2f} kg"); line("with payload", f"{m_total:.2f} kg")
-    print("ARM SHOULDER PITCH LOAD (one arm carries %d%% of weight)" % (SHARE * 100))
-    for k, x in poses.items():
-        t = shoulder_nm(x); line(k, f"{t:.2f} N·m = {t / G * 100:.1f} kg·cm, x1.5 = {t * 1.5 / G * 100:.1f} kg·cm")
+    print("ARM AS OUTRIGGER (PTK7465 PLUS stall %.1f kg·cm; continuous <= %.1f, transient <= %.1f)" % (PTK_STALL_KGCM, PTK_STALL_KGCM * CONT_RULE, PTK_STALL_KGCM * PEAK_RULE))
+    for an, (l1, l2, xs, xe, ma, mc) in ARMS.items():
+        print("  " + an)
+        for cn, f_total in cases.items():
+            f = f_total / 2
+            ts = kgcm(f * xs + ma * G * mc); te = kgcm(f * xe)
+            lim = PTK_STALL_KGCM * (CONT_RULE if cn.startswith("steady") else PEAK_RULE)
+            ok = "OK" if max(ts, te) <= lim else "NG"
+            line("    " + cn, f"tip {f:.1f} N | shoulder {ts:.1f} / elbow {te:.1f} kg·cm  {ok}")
     print("RING DRIVE")
     line("gear ratio internal/pinion", f"{ratio:.1f}:1")
     line("per-wheel torque (tilt %d° + %.1f m/s²)" % (tilt_deg, acc), f"{T_wheel:.2f} N·m")
