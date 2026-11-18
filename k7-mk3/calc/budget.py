@@ -96,3 +96,30 @@ if __name__ == "__main__":
     line("drop while ring still inside opening", f"{drop_while_inside * 1000:.1f} mm")
     line("radial clearance in opening", f"{(R_OPEN - R_RING) * 1000:.1f} mm")
     line("verdict", "COLLIDES" if drop_while_inside > (R_OPEN - R_RING) else "OK")
+
+
+# ================= Loop 4: drop-link actuator torque + fore/aft CG =================
+def loop4():
+    print("DROP-LINK ACTUATOR (per side, link %.0f mm)" % (0.07 * 1000))
+    F = m_total * G / 2
+    for name, y_drop in [("ring just touches floor (lifting body)", 0.014), ("deployed, 60 mm drop", 0.06)]:
+        th = math.asin(y_drop / 0.07); t = F * 0.07 * math.cos(th)
+        line("  " + name, f"{t:.2f} N·m = {kgcm(t):.1f} kg·cm static, x2 dynamic {kgcm(2 * t):.1f} kg·cm")
+    # fore/aft CG in stance: z forward from body centre (m). axle sits at +0.034 after the leading link drops.
+    AXLE_Z = 0.034
+    arm = 8 * PTK7465_G + 2 * 4 * 16 + 2 * 60
+    wheel = 2 * (153 + 150 + 80 + 230 + 110 + 40)
+    layouts = {
+        "Mk-III as drawn (battery/Kakip centred-front)": {"arms": (arm, 0.165), "wheel modules": (wheel, AXLE_Z), "deploy": (240, 0.03),
+            "frame": (600, 0), "Kakip": (100, 0.08), "MCU/drivers": (120, 0.05), "battery": (330, 0), "wiring": (200, 0), "payload": (300, 0)},
+        "rear electronics: battery z-100, Kakip z-80, MCU z-50": {"arms": (arm, 0.165), "wheel modules": (wheel, AXLE_Z), "deploy": (240, 0.03),
+            "frame": (600, 0), "Kakip": (100, -0.08), "MCU/drivers": (120, -0.05), "battery": (330, -0.10), "wiring": (200, 0), "payload": (300, 0)},
+    }
+    print("FORE/AFT CG IN STANCE (axle at z=%+.0f mm, CG height above axle %.0f mm)" % (AXLE_Z * 1000, H_CG * 1000))
+    for n, comp in layouts.items():
+        M_ = sum(m for m, z in comp.values()); zc = sum(m * z for m, z in comp.values()) / M_
+        off = zc - AXLE_Z; lean = math.degrees(math.atan2(off, H_CG))
+        line("  " + n, f"CG z={zc * 1000:+.1f} mm, {off * 1000:+.1f} mm from axle -> body leans back {lean:.1f}°")
+
+if __name__ == "__main__":
+    loop4()
