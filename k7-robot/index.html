@@ -1,0 +1,171 @@
+<title>K-7 運搬ロボット</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=IBM+Plex+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* Layout: dark hangar viewer full-bleed on top, then a single 980px column of design notes. Dark-first by design. */
+:root {
+  --bg: #121315; --panel: #1b1d20; --ink: #e8e4da; --muted: #9a978f; --line: #2d3034;
+  --red: #b3342a; --amber: #f2a541; --brass: #b8925a; --hazard: #e6b422;
+  --f-disp: "Oswald", "Zen Kaku Gothic New", sans-serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.75; }
+.viewer { position: relative; height: min(78vh, 760px); min-height: 440px; background: #0b0c0d; border-bottom: 1px solid var(--line); }
+.viewer canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.hud { position: absolute; inset: 0; pointer-events: none; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; justify-content: space-between; }
+.hud-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.plate { font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+.plate b { display: block; font-family: var(--f-disp); font-weight: 600; font-size: clamp(26px, 5vw, 44px); letter-spacing: .04em; color: var(--ink); line-height: 1.05; }
+.plate b span { color: var(--red); }
+.status { font-family: var(--f-mono); font-size: 12px; color: var(--amber); text-align: right; letter-spacing: .08em; }
+.modes { pointer-events: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.modes button { font: 600 14px/1 var(--f-body); color: var(--ink); background: rgba(20,21,23,.78); border: 1px solid #4a4d52; padding: 11px 14px; border-radius: 2px; cursor: pointer; backdrop-filter: blur(4px); }
+.modes button small { display: block; font: 400 10px/1.4 var(--f-mono); color: var(--muted); letter-spacing: .1em; margin-top: 3px; }
+.modes button[aria-pressed="true"] { border-color: var(--hazard); box-shadow: inset 0 -3px 0 var(--hazard); }
+.modes button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.hint { font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--f-mono); color: var(--muted); }
+main { max-width: 980px; margin: 0 auto; padding-block: 48px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 56px; }
+section { display: grid; gap: 16px; }
+h2 { font-family: var(--f-body); font-size: 22px; margin: 0; display: flex; gap: 12px; align-items: baseline; text-wrap: balance; }
+h2 i { font: 600 12px var(--f-mono); font-style: normal; color: var(--hazard); letter-spacing: .1em; white-space: nowrap; }
+h3 { margin: 0; font-size: 16px; }
+p { margin: 0; }
+.prose { max-width: 66ch; color: #cfcbc1; display: grid; gap: 10px; }
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 680px) { .cards { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--line); padding: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.card.main { border-top: 3px solid var(--hazard); }
+.card .id { font: 600 11px var(--f-mono); color: var(--amber); letter-spacing: .12em; }
+.card ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; color: #cfcbc1; font-size: 14px; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.sw { border: 1px solid var(--line); background: var(--panel); }
+.sw div { height: 54px; }
+.sw p { padding: 8px 10px; font-size: 13px; line-height: 1.5; }
+.sw p span { display: block; font: 11px var(--f-mono); color: var(--muted); }
+.tbl { overflow-x: auto; border: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 11px var(--f-mono); letter-spacing: .1em; color: var(--muted); background: var(--panel); }
+tr:last-child td { border-bottom: 0; }
+td:first-child { white-space: nowrap; font-weight: 700; }
+.note { border-left: 3px solid var(--red); padding: 4px 0 4px 14px; color: #cfcbc1; max-width: 66ch; }
+</style>
+
+<div class="viewer" id="viewer">
+  <div class="loading" id="loading">LOADING MODEL…</div>
+  <div class="hud">
+    <div class="hud-top">
+      <div class="plate">Опытный образец / prototype<b>K-7 <span>ГРУЗ</span></b>運搬・回収ロボット 試作7号機</div>
+      <div class="status" id="status">MODE: DRIVE</div>
+    </div>
+    <div style="display:grid;gap:8px">
+      <div class="modes" role="group" aria-label="モード切替">
+        <button type="button" id="m-stow" data-m="stow">格納<small>STOW</small></button>
+        <button type="button" id="m-drive" data-m="drive" aria-pressed="true">走行<small>4点支持</small></button>
+        <button type="button" id="m-load" data-m="load">積み込み<small>アーム→後部格納庫</small></button>
+        <button type="button" id="m-carry" data-m="carry">運搬<small>後輪格納・2輪倒立</small></button>
+      </div>
+      <div class="hint">ドラッグで回転 / ピンチ・ホイールで拡大</div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2><i>01</i>スケッチの読み取り</h2>
+    <div class="prose">
+      <p>真上から見た図として解釈しました。中央にカメラ付きの本体、前方へ伸びる2本のロボットアーム（先端に補助輪）、後ろの左右に大径の駆動輪、その後ろに丸みのある格納庫です。</p>
+      <p><b>走行</b>は後輪2つと前足先端の補助輪2つの4点支持。<b>運搬</b>では後輪を跳ね上げて格納し、前足だけで立ちます。物はアームで拾って、本体後ろの格納庫に入れて運びます。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><i>02</i>提案と改善案</h2>
+    <div class="cards">
+      <div class="card main">
+        <div class="id">案A · 3Dモデルの基本形</div>
+        <h3>前足で立つ「2輪倒立」運搬モード</h3>
+        <ul>
+          <li>後輪を上げると、前足だけでは前に倒れるか後ろに倒れます。そこで本体を起こし、前足を真下に伸ばして、先端の車輪で倒立振子として立たせます</li>
+          <li>後ろの格納庫が釣り合いのおもりになり、荷物が増えるほど安定方向に働きます</li>
+          <li>前足先端は補助輪ではなく<b>駆動輪（ハブモーター）</b>にする必要があります</li>
+        </ul>
+      </div>
+      <div class="card main">
+        <div class="id">案B · 改善（モデルに反映）</div>
+        <h3>補助輪がそのまま手になる「グリッパー輪」</h3>
+        <ul>
+          <li>先端の車輪を2枚の半円に割って開くと、つかむ爪になります。補助輪とハンドを1つの部品で兼用</li>
+          <li>積み込みは、後輪＋片足の3点で立ち、空いた方のアームが物をつかんで頭上を越え、後部格納庫へ落とします</li>
+          <li>格納庫の蓋は上ヒンジで開閉。モデルの「積み込み」で動きを確認できます</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="id">案C · 改善</div>
+        <h3>格納庫を床まで下ろす「ちりとり式」</h3>
+        <ul>
+          <li>頭上越しに持ち上げるには肩に大きなトルクが要り、PTK7465 PLUSの限界に近づきます</li>
+          <li>格納庫を後ろへ傾けて床まで下ろし、アームは物を押し込むだけにすれば、重い物も扱えます</li>
+          <li>傾け機構は格納庫の左右にリンク＋サーボ1個</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="id">案D · 改善</div>
+        <h3>バッテリーを動かして重心を移す</h3>
+        <ul>
+          <li>バッテリーを格納庫の底にレールで載せ、モードに合わせて前後に動かします</li>
+          <li>倒立モードでは真上へ、積み込み時は後輪側へ寄せて転倒を防ぎます</li>
+          <li>重い部品を「動くおもり」として使うので、追加の重量がいりません</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>部位</th><th>アクチュエータ</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>前足（アーム）×2</td><td>PTK7465 PLUS ×4 ずつ＝8</td><td>肩ヨー・肩ピッチ・肘・手首。先端にハブモーターと開閉用小型サーボ</td></tr>
+          <tr><td>後輪脚 ×2</td><td>格納用サーボ ×1 ずつ</td><td>スイングアームを上へ振り上げて格納庫の横に収める</td></tr>
+          <tr><td>後輪 ×2</td><td>DCギヤモーター（エンコーダ付き）</td><td>走行の主駆動。大径でトルク重視</td></tr>
+          <tr><td>格納庫</td><td>蓋サーボ ×1（案Cなら傾け用 ×1 追加）</td><td>上ヒンジの蓋</td></tr>
+          <tr><td>頭脳</td><td>Kakip＋リアルタイムマイコン</td><td>正面カメラで対象を検出、マイコンが倒立制御とサーボを担当</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><i>03</i>デザインの方向性</h2>
+    <div class="prose">
+      <p>テーマは「閉鎖された地下研究所で、誰にも止められずに荷物を運び続けている試作7号機」。白い陶器のような外装（無機質な試験施設）、ソ連風の赤エナメルと真鍮の関節（レトロフューチャー）、警告色のストライプと露出した配線（サイバーパンク）、そして長年の汚れと霜のような退色を重ねます。</p>
+    </div>
+    <div class="swatches">
+      <div class="sw"><div style="background:#e6e0d2"></div><p>外装ホワイト<span>3Dプリント＋サフ＋つや消し</span></p></div>
+      <div class="sw"><div style="background:#8e231b"></div><p>エナメルレッド<span>関節カバー・警告部</span></p></div>
+      <div class="sw"><div style="background:#b8925a"></div><p>真鍮<span>サーボホーン・リング</span></p></div>
+      <div class="sw"><div style="background:#3b3f44"></div><p>ガンメタル<span>CNCアルミ骨格</span></p></div>
+      <div class="sw"><div style="background:repeating-linear-gradient(45deg,#e6b422 0 10px,#161616 10px 20px)"></div><p>ハザード<span>マスキング塗装</span></p></div>
+      <div class="sw"><div style="background:#f2a541"></div><p>琥珀の単眼<span>LEDリング＋レンズ</span></p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><i>04</i>手持ちの設備での作り方</h2>
+    <div class="cards">
+      <div class="card"><div class="id">3Dプリンタ</div><h3>外装パネル・格納庫・カメラハウジング</h3><ul><li>ASAかPETGで印刷。外装は骨格にネジ止めする「パネル式」にすると、塗装も交換も楽</li><li>パネルの継ぎ目をあえて残すと、モデルのような精密感が出ます</li></ul></div>
+      <div class="card"><div class="id">CNC</div><h3>アームのリンク・シャーシ骨格</h3><ul><li>アルミ3〜5mm板。モデルのように肉抜き穴を開けて軽く強く</li><li>黒染めかガンメタ塗装、エッジだけ削って地金を出すと使い込んだ質感に</li></ul></div>
+      <div class="card"><div class="id">塗装</div><h3>汚しと剥がれ</h3><ul><li>赤や白の下に銀を塗り、ヘアスプレー（チッピング液）を挟んで上塗り→濡らして削ると、塗装の剥がれが再現できます</li><li>油彩やエナメルのウォッシュで溝に汚れを流し、エッジに銀のドライブラシ</li></ul></div>
+      <div class="card"><div class="id">Altium</div><h3>専用基板</h3><ul><li>単眼の裏に入れる丸形LEDリング基板（アドレサブルLED）。瞳の動きや感情表現に</li><li>サーボ8ch＋モーター＋IMUをまとめた制御基板。マイコンと電源分離もここで</li></ul></div>
+    </div>
+    <p class="note">3Dモデルは見た目のイメージです。寸法は目安（本体 幅約36cm）で、関節の可動範囲やトルクは実物の部品で確認が必要です。</p>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+<script src="robot.js"></script>
