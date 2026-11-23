@@ -1,7 +1,7 @@
 # 流体力学 問題集とシミュレータ
 
 - 問題集（18問・初級/中級/上級）: https://claude.ai/artifact/A5ZD1Mg8MHVt1w7cuYYznc
-- シミュレータ（17本）: https://claude.ai/artifact/QA4b8ym6G5H3u4QgxXbN6c
+- シミュレータ（18本）: https://claude.ai/artifact/QA4b8ym6G5H3u4QgxXbN6c
 
 ## 構成
 - `problems.json` … 定理と問題のデータ（ここを直して再生成する）
