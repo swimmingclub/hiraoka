@@ -1,2 +1,3 @@
 node_modules/
 fluid-sim/*.png
+__pycache__/
