@@ -1,0 +1,97 @@
+<title>流体力学シミュレータ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Murecho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 左に定理一覧（級ごと）、右にキャンバス＋スライダー＋計算値。狭い画面では縦積み */
+:root{
+  --bg:#f3f6f7; --paper:#ffffff; --ink:#14232b; --muted:#5a6d77; --line:#d4dee2;
+  --accent:#0b6e8a; --accent-soft:#dceff4; --b:#2f8f5b; --m:#c07a12; --a:#b23a48; --code:#eef3f5;
+  --water:#3d9fc4; --water-deep:#1c5f7f; --solid:#8a9aa2; --wood:#c89b5e; --air:#e8f1f4; --hi:#e0524f; --lo:#3c6fd8;
+  --f-display:"Murecho","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33;
+  --water:#2f87ab; --water-deep:#174e68; --solid:#5f717a; --wood:#a97f48; --air:#13232b; --hi:#ff7a6e; --lo:#6f9cff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33;
+  --water:#2f87ab; --water-deep:#174e68; --solid:#5f717a; --wood:#a97f48; --air:#13232b; --hi:#ff7a6e; --lo:#6f9cff; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14.5px;line-height:1.7}
+.app{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100%}
+aside{border-right:1px solid var(--line);padding:20px 12px 20px max(16px,env(safe-area-inset-left,0px));background:var(--paper);overflow-y:auto}
+aside h1{font-family:var(--f-display);font-weight:800;font-size:19px;margin:0 0 2px 6px;line-height:1.3}
+aside .sub{font-size:12px;color:var(--muted);margin:0 0 14px 6px}
+aside a.back{font-size:12px;color:var(--accent);margin-left:6px}
+.grp{margin-top:14px}
+.grp h2{font-family:var(--f-display);font-size:12px;letter-spacing:.12em;color:var(--muted);margin:0 0 4px 6px;display:flex;gap:6px;align-items:center}
+.grp h2 .dot{width:8px;height:8px;border-radius:50%}
+.grp a{display:block;text-decoration:none;color:var(--ink);padding:5px 8px;border-radius:6px;font-size:13.5px;line-height:1.45}
+.grp a:hover{background:var(--code)}
+.grp a[aria-current="page"]{background:var(--ink);color:var(--paper)}
+main{padding-block:20px 40px;padding-left:24px;padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0;display:flex;flex-direction:column;gap:14px;max-width:1100px}
+.title{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.title h2{font-family:var(--f-display);font-weight:800;font-size:clamp(20px,3vw,26px);margin:0;text-wrap:balance}
+.lvl{font-size:12px;font-weight:700;color:var(--paper);border-radius:4px;padding:1px 8px}
+.formula{font-family:var(--f-mono);font-size:14px;background:var(--code);padding:6px 12px;border-radius:6px;overflow-wrap:anywhere;align-self:flex-start}
+.explain{margin:0;color:var(--muted);max-width:75ch}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:start}
+.canvasbox{background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:0}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/10;touch-action:none}
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card h3{margin:0 0 8px;font-size:12px;letter-spacing:.1em;color:var(--muted);font-family:var(--f-display)}
+.ctl{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.ctl .lab{display:flex;justify-content:space-between;font-size:13px;gap:8px}
+.ctl .lab output{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--accent);font-weight:600}
+.ctl input[type=range]{width:100%;accent-color:var(--accent)}
+.ctl select{font:inherit;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;margin-bottom:6px;cursor:pointer}
+table.ro{width:100%;border-collapse:collapse;font-size:13px}
+table.ro td{padding:3px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.ro td:last-child{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;padding-left:8px;white-space:nowrap}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.btn{font:inherit;font-size:13px;font-weight:700;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+button.btn:hover{border-color:var(--accent)}
+.related{font-size:13px;color:var(--muted)}
+.related a{color:var(--accent);font-weight:700}
+.hint{font-size:13px;background:var(--accent-soft);border-radius:8px;padding:10px 14px;margin:0}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:900px){.stage{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:700px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  aside{border-right:none;border-bottom:1px solid var(--line);padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .grp{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+  .grp h2{width:100%}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px))}
+}
+</style>
+<div class="app">
+  <aside>
+    <h1>流体力学シミュレータ</h1>
+    <p class="sub">値を動かして定理を体で覚える</p>
+    <a class="back" id="backlink" href="#" target="_blank" rel="noopener">問題集を開く ↗</a>
+    <nav id="nav"></nav>
+  </aside>
+  <main>
+    <div class="title"><span class="lvl" id="lvl"></span><h2 id="simname"></h2></div>
+    <div class="formula" id="formula"></div>
+    <p class="explain" id="explain"></p>
+    <div class="stage">
+      <div class="canvasbox"><canvas id="cv" width="960" height="600" aria-label="シミュレーション表示"></canvas></div>
+      <div class="panel">
+        <div class="card"><h3>パラメータ</h3><div id="ctls"></div><div class="btns" id="btns"></div></div>
+        <div class="card"><h3>計算結果</h3><table class="ro" id="ro"></table></div>
+      </div>
+    </div>
+    <p class="hint" id="hint"></p>
+    <p class="related" id="related"></p>
+  </main>
+</div>
+<script>
+/*__JS__*/
+</script>

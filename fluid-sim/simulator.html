@@ -1,0 +1,323 @@
+<title>流体力学シミュレータ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Murecho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 左に定理一覧（級ごと）、右にキャンバス＋スライダー＋計算値。狭い画面では縦積み */
+:root{
+  --bg:#f3f6f7; --paper:#ffffff; --ink:#14232b; --muted:#5a6d77; --line:#d4dee2;
+  --accent:#0b6e8a; --accent-soft:#dceff4; --b:#2f8f5b; --m:#c07a12; --a:#b23a48; --code:#eef3f5;
+  --water:#3d9fc4; --water-deep:#1c5f7f; --solid:#8a9aa2; --wood:#c89b5e; --air:#e8f1f4; --hi:#e0524f; --lo:#3c6fd8;
+  --f-display:"Murecho","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33;
+  --water:#2f87ab; --water-deep:#174e68; --solid:#5f717a; --wood:#a97f48; --air:#13232b; --hi:#ff7a6e; --lo:#6f9cff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33;
+  --water:#2f87ab; --water-deep:#174e68; --solid:#5f717a; --wood:#a97f48; --air:#13232b; --hi:#ff7a6e; --lo:#6f9cff; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14.5px;line-height:1.7}
+.app{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100%}
+aside{border-right:1px solid var(--line);padding:20px 12px 20px max(16px,env(safe-area-inset-left,0px));background:var(--paper);overflow-y:auto}
+aside h1{font-family:var(--f-display);font-weight:800;font-size:19px;margin:0 0 2px 6px;line-height:1.3}
+aside .sub{font-size:12px;color:var(--muted);margin:0 0 14px 6px}
+aside a.back{font-size:12px;color:var(--accent);margin-left:6px}
+.grp{margin-top:14px}
+.grp h2{font-family:var(--f-display);font-size:12px;letter-spacing:.12em;color:var(--muted);margin:0 0 4px 6px;display:flex;gap:6px;align-items:center}
+.grp h2 .dot{width:8px;height:8px;border-radius:50%}
+.grp a{display:block;text-decoration:none;color:var(--ink);padding:5px 8px;border-radius:6px;font-size:13.5px;line-height:1.45}
+.grp a:hover{background:var(--code)}
+.grp a[aria-current="page"]{background:var(--ink);color:var(--paper)}
+main{padding-block:20px 40px;padding-left:24px;padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0;display:flex;flex-direction:column;gap:14px;max-width:1100px}
+.title{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.title h2{font-family:var(--f-display);font-weight:800;font-size:clamp(20px,3vw,26px);margin:0;text-wrap:balance}
+.lvl{font-size:12px;font-weight:700;color:var(--paper);border-radius:4px;padding:1px 8px}
+.formula{font-family:var(--f-mono);font-size:14px;background:var(--code);padding:6px 12px;border-radius:6px;overflow-wrap:anywhere;align-self:flex-start}
+.explain{margin:0;color:var(--muted);max-width:75ch}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:start}
+.canvasbox{background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:0}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/10;touch-action:none}
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card h3{margin:0 0 8px;font-size:12px;letter-spacing:.1em;color:var(--muted);font-family:var(--f-display)}
+.ctl{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.ctl .lab{display:flex;justify-content:space-between;font-size:13px;gap:8px}
+.ctl .lab output{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--accent);font-weight:600}
+.ctl input[type=range]{width:100%;accent-color:var(--accent)}
+.ctl select{font:inherit;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;margin-bottom:6px;cursor:pointer}
+table.ro{width:100%;border-collapse:collapse;font-size:13px}
+table.ro td{padding:3px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.ro td:last-child{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;padding-left:8px;white-space:nowrap}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.btn{font:inherit;font-size:13px;font-weight:700;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+button.btn:hover{border-color:var(--accent)}
+.related{font-size:13px;color:var(--muted)}
+.related a{color:var(--accent);font-weight:700}
+.hint{font-size:13px;background:var(--accent-soft);border-radius:8px;padding:10px 14px;margin:0}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:900px){.stage{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:700px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  aside{border-right:none;border-bottom:1px solid var(--line);padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .grp{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+  .grp h2{width:100%}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px))}
+}
+</style>
+<div class="app">
+  <aside>
+    <h1>流体力学シミュレータ</h1>
+    <p class="sub">値を動かして定理を体で覚える</p>
+    <a class="back" id="backlink" href="#" target="_blank" rel="noopener">問題集を開く ↗</a>
+    <nav id="nav"></nav>
+  </aside>
+  <main>
+    <div class="title"><span class="lvl" id="lvl"></span><h2 id="simname"></h2></div>
+    <div class="formula" id="formula"></div>
+    <p class="explain" id="explain"></p>
+    <div class="stage">
+      <div class="canvasbox"><canvas id="cv" width="960" height="600" aria-label="シミュレーション表示"></canvas></div>
+      <div class="panel">
+        <div class="card"><h3>パラメータ</h3><div id="ctls"></div><div class="btns" id="btns"></div></div>
+        <div class="card"><h3>計算結果</h3><table class="ro" id="ro"></table></div>
+      </div>
+    </div>
+    <p class="hint" id="hint"></p>
+    <p class="related" id="related"></p>
+  </main>
+</div>
+<script>
+// ===== シミュレータ共通基盤 =====
+// 各シミュレータは defineSim({...}) で登録する。
+//  id, level('beginner'|'intermediate'|'advanced'), name, formula, explain, hint, related:['B1',...]
+//  params:[{id,label,min,max,step,value,unit} | {id,label,type:'check',value} | {id,label,type:'select',options:[[v,label]],value}]
+//  buttons:[{label, action(S)}]
+//  init(S)          : 状態の初期化（シミュ切替時・リセット時）
+//  onParam(S,id)    : パラメータ変更時（省略可）
+//  step(S,dt)       : 時間発展（省略可、dt は秒）
+//  draw(g,S)        : 960×600 の論理座標で描画
+//  readout(S)       : [[ラベル, 文字列], ...] を返す
+const SIMS = [];
+function defineSim(def){ SIMS.push(def); }
+const LEVELS = {beginner:{label:'初級',color:'--b'},intermediate:{label:'中級',color:'--m'},advanced:{label:'上級',color:'--a'}};
+const PROBLEMS_URL = 'https://claude.ai/artifact/A5ZD1Mg8MHVt1w7cuYYznc';
+const W = 960, H = 600;
+
+// ---- 小さな道具 ----
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+function fmt(v, sig=3){
+  if(!isFinite(v)) return '—';
+  if(v===0) return '0';
+  const a=Math.abs(v);
+  if(a>=1e5||a<1e-3){ const e=Math.floor(Math.log10(a)); const m=v/10**e; return m.toFixed(sig-1)+'×10'+sup(e); }
+  const d=Math.max(0,sig-1-Math.floor(Math.log10(a)));
+  return v.toFixed(Math.min(d,6));
+}
+function sup(n){return String(n).split('').map(c=>'⁰¹²³⁴⁵⁶⁷⁸⁹⁻'['0123456789-'.indexOf(c)]).join('')}
+function arrow(g,x1,y1,x2,y2,color,w=2,head=10){
+  const ang=Math.atan2(y2-y1,x2-x1), len=Math.hypot(x2-x1,y2-y1);
+  if(len<1) return;
+  const h=Math.min(head,len*0.6);
+  g.save(); g.strokeStyle=color; g.fillStyle=color; g.lineWidth=w; g.lineCap='round';
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2-Math.cos(ang)*h*0.7,y2-Math.sin(ang)*h*0.7); g.stroke();
+  g.beginPath(); g.moveTo(x2,y2);
+  g.lineTo(x2-h*Math.cos(ang-0.4),y2-h*Math.sin(ang-0.4));
+  g.lineTo(x2-h*Math.cos(ang+0.4),y2-h*Math.sin(ang+0.4)); g.closePath(); g.fill(); g.restore();
+}
+function text(g,s,x,y,o={}){
+  g.save(); g.fillStyle=o.color||S.C.ink; g.font=`${o.weight||500} ${(o.size||15)*1.2}px ${o.mono?S.C.fmono:S.C.fbody}`;
+  g.textAlign=o.align||'left'; g.textBaseline=o.base||'middle';
+  if(o.bg){ const m=g.measureText(s), pw=6, h=(o.size||15)*1.2+6;
+    let bx=x; if(g.textAlign==='center') bx-=m.width/2; else if(g.textAlign==='right') bx-=m.width;
+    g.fillStyle=o.bg; g.fillRect(bx-pw,y-h/2,m.width+pw*2,h); g.fillStyle=o.color||S.C.ink; }
+  g.fillText(s,x,y); g.restore();
+}
+function line(g,pts,color,w=1.5,dash){
+  g.save(); g.strokeStyle=color; g.lineWidth=w; if(dash) g.setLineDash(dash);
+  g.beginPath(); pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])); g.stroke(); g.restore();
+}
+function rect(g,x,y,w,h,fill,stroke,lw=1.5){ g.save(); if(fill){g.fillStyle=fill;g.fillRect(x,y,w,h);} if(stroke){g.strokeStyle=stroke;g.lineWidth=lw;g.strokeRect(x,y,w,h);} g.restore(); }
+// 圧力などのカラーマップ（低=青 → 高=赤）、t∈[0,1]
+function heat(t){ t=clamp(t,0,1);
+  const s=[[60,111,216],[110,190,220],[240,240,230],[245,170,90],[224,82,79]];
+  const k=t*(s.length-1), i=Math.min(Math.floor(k),s.length-2), f=k-i;
+  const c=s[i].map((v,j)=>Math.round(lerp(v,s[i+1][j],f))); return `rgb(${c[0]},${c[1]},${c[2]})`; }
+// 粒子（流れの可視化用）
+function makeParticles(n,spawn){ return Array.from({length:n},()=>spawn(true)); }
+
+// ---- 実行時 ----
+const S = {P:{}, t:0, C:{}, pointer:{x:0,y:0,down:false}};
+let cur=null;
+const cv=document.getElementById('cv'), g=cv.getContext('2d');
+function readColors(){
+  const cs=getComputedStyle(document.documentElement);
+  ['bg','paper','ink','muted','line','accent','accent-soft','code','water','water-deep','solid','wood','air','hi','lo','b','m','a']
+    .forEach(k=>S.C[k.replace('-','_')]=cs.getPropertyValue('--'+k).trim());
+  S.C.fbody=cs.getPropertyValue('--f-body'); S.C.fmono=cs.getPropertyValue('--f-mono');
+}
+function resize(){
+  const dpr=Math.min(window.devicePixelRatio||1,2), r=cv.getBoundingClientRect();
+  const scale=(r.width||W)/W*dpr;
+  cv.width=Math.round(W*scale); cv.height=Math.round(H*scale);
+  g.setTransform(scale,0,0,scale,0,0);
+}
+function buildNav(){
+  const nav=document.getElementById('nav');
+  nav.innerHTML=Object.entries(LEVELS).map(([lv,L])=>`<div class="grp"><h2><span class="dot" style="background:var(${L.color})"></span>${L.label}</h2>${
+    SIMS.filter(s=>s.level===lv).map(s=>`<a href="#${s.id}" data-id="${s.id}">${s.name}</a>`).join('')}</div>`).join('');
+  const bl=document.getElementById('backlink');
+  if(PROBLEMS_URL.startsWith('http')) bl.href=PROBLEMS_URL; else bl.hidden=true;
+}
+function buildControls(sim){
+  const box=document.getElementById('ctls'); box.innerHTML='';
+  S.P={};
+  (sim.params||[]).forEach(p=>{
+    S.P[p.id]=p.value;
+    const id='p-'+sim.id+'-'+p.id;
+    if(p.type==='check'){
+      const l=document.createElement('label'); l.className='chk';
+      l.innerHTML=`<input type="checkbox" id="${id}" ${p.value?'checked':''}> ${p.label}`;
+      l.querySelector('input').onchange=e=>{S.P[p.id]=e.target.checked; changed(p.id)}; box.appendChild(l); return;
+    }
+    const d=document.createElement('div'); d.className='ctl';
+    if(p.type==='select'){
+      d.innerHTML=`<div class="lab"><label for="${id}">${p.label}</label></div><select id="${id}">${p.options.map(([v,l])=>`<option value="${v}" ${v==p.value?'selected':''}>${l}</option>`).join('')}</select>`;
+      d.querySelector('select').onchange=e=>{S.P[p.id]=e.target.value; changed(p.id)};
+    } else {
+      d.innerHTML=`<div class="lab"><label for="${id}">${p.label}</label><output>${show(p,p.value)}</output></div><input type="range" id="${id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">`;
+      const out=d.querySelector('output');
+      d.querySelector('input').oninput=e=>{const v=parseFloat(e.target.value); S.P[p.id]=v; out.textContent=show(p,v); changed(p.id)};
+    }
+    box.appendChild(d);
+  });
+  const bb=document.getElementById('btns'); bb.innerHTML='';
+  const all=[...(sim.buttons||[]),{label:'初期値に戻す',action:()=>select(sim.id,true)}];
+  all.forEach(b=>{const e=document.createElement('button'); e.className='btn'; e.textContent=b.label; e.onclick=()=>{b.action(S); updateReadout()}; bb.appendChild(e)});
+}
+function show(p,v){ const d=p.digits??Math.max(0,-Math.floor(Math.log10(p.step||1))); return (+v).toFixed(d)+(p.unit?' '+p.unit:''); }
+function changed(id){ if(cur.onParam) cur.onParam(S,id); updateReadout(); }
+function setParam(id,v){ S.P[id]=v; const el=document.getElementById('p-'+cur.id+'-'+id); if(el){ if(el.type==='checkbox') el.checked=v; else el.value=v; el.dispatchEvent(new Event('input')); } }
+function updateReadout(){
+  const rows=cur.readout?cur.readout(S):[];
+  document.getElementById('ro').innerHTML=rows.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join('');
+}
+function select(id,force){
+  const sim=SIMS.find(s=>s.id===id)||SIMS[0];
+  if(cur===sim && !force) return;
+  cur=sim;
+  document.querySelectorAll('#nav a').forEach(a=>{ if(a.dataset.id===sim.id) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  const L=LEVELS[sim.level];
+  const lv=document.getElementById('lvl'); lv.textContent=L.label; lv.style.background=`var(${L.color})`;
+  document.getElementById('simname').textContent=sim.name;
+  document.getElementById('formula').textContent=sim.formula;
+  document.getElementById('explain').textContent=sim.explain;
+  document.getElementById('hint').textContent='やってみよう：'+(sim.hint||'');
+  document.getElementById('hint').hidden=!sim.hint;
+  const rel=document.getElementById('related');
+  rel.innerHTML=sim.related&&sim.related.length?('関連する問題：'+sim.related.map(r=>PROBLEMS_URL.startsWith('http')?`<a href="${PROBLEMS_URL}#${sim.level}" target="_blank" rel="noopener">${r}</a>`:r).join('、')):'';
+  document.title=sim.name+' | 流体力学シミュレータ';
+  for(const k of Object.keys(S)) if(!['P','C','pointer'].includes(k)) delete S[k];
+  S.t=0;
+  buildControls(sim);
+  if(sim.init) sim.init(S);
+  updateReadout();
+}
+function route(){ select(location.hash.slice(1)); }
+function pos(e){ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H]; }
+cv.addEventListener('pointerdown',e=>{[S.pointer.x,S.pointer.y]=pos(e); S.pointer.down=true; cv.setPointerCapture(e.pointerId); cur.onPointer&&cur.onPointer(S,'down'); updateReadout();});
+cv.addEventListener('pointermove',e=>{[S.pointer.x,S.pointer.y]=pos(e); if(S.pointer.down&&cur.onPointer){cur.onPointer(S,'move'); updateReadout();}});
+cv.addEventListener('pointerup',()=>{S.pointer.down=false; cur.onPointer&&cur.onPointer(S,'up');});
+let last=performance.now(), roTimer=0;
+function frame(now){
+  const dt=Math.min((now-last)/1000,0.05); last=now; S.t+=dt;
+  if(cur.step){ cur.step(S,dt); roTimer+=dt; if(roTimer>0.25&&cur.liveReadout){roTimer=0; updateReadout();} }
+  g.save(); g.fillStyle=S.C.paper; g.fillRect(0,0,W,H); cur.draw(g,S); g.restore();
+  requestAnimationFrame(frame);
+}
+function boot(){
+  readColors(); buildNav(); resize(); route();
+  window.addEventListener('hashchange',route);
+  window.addEventListener('resize',resize);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readColors);
+  new MutationObserver(readColors).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  document.fonts&&document.fonts.ready.then(()=>{});
+  requestAnimationFrame(frame);
+}
+
+// 初級：静水圧と平面壁の全圧力
+defineSim({
+  id:'hydrostatic', level:'beginner', name:'静水圧と水門の全圧力',
+  formula:'p = ρgh　　F = ρg h_G A　　h_P = h_G + I_G/(h_G A)',
+  explain:'静止した水の圧力は深さに比例して大きくなり、壁を垂直に押します。圧力は三角形に分布するので、合力（全圧力）は図心より深い位置（長方形なら水深の 2/3）に作用します。',
+  hint:'水深を 2 倍にすると、全圧力は何倍になるでしょう？（答え：4 倍。圧力も面積も 2 倍になるから）。水の中をクリックすると、その深さの圧力が表示されます。',
+  related:['B1'],
+  params:[
+    {id:'h',label:'水深 h',min:0.5,max:10,step:0.1,value:5,unit:'m'},
+    {id:'b',label:'水門の幅 b',min:0.5,max:5,step:0.1,value:2,unit:'m'},
+    {id:'rho',label:'液体',type:'select',value:'1000',options:[['1000','水 (1000 kg/m³)'],['1025','海水 (1025 kg/m³)'],['850','油 (850 kg/m³)'],['13600','水銀 (13600 kg/m³)']]},
+  ],
+  init(S){ S.probe=null; },
+  onPointer(S,ev){ if(ev==='down'||S.pointer.down){ const y0=540, sc=48, surf=y0-S.P.h*sc;
+      if(S.pointer.x>110&&S.pointer.x<560&&S.pointer.y>surf&&S.pointer.y<y0) S.probe=(S.pointer.y-surf)/sc; } },
+  calc(S){ const rho=+S.P.rho, g=9.81, h=S.P.h, b=S.P.b;
+    const A=b*h, hG=h/2, F=rho*g*hG*A, IG=b*h**3/12, hP=hG+IG/(hG*A);
+    return {rho,g,h,b,A,hG,F,hP,pmax:rho*g*h}; },
+  draw(g,S){
+    const C=S.C, y0=540, sc=48, x0=110, xw=560, r=this.calc(S), surf=y0-r.h*sc;
+    // 目盛り
+    for(let d=0; d<=10; d++){ const y=y0-d*sc; line(g,[[x0-14,y],[x0-4,y]],C.muted,1); text(g,d+' m',x0-18,y,{align:'right',size:12,color:C.muted,mono:true}); }
+    text(g,'底からの高さ',x0-18,y0-10*sc-22,{align:'right',size:12,color:C.muted});
+    // 水
+    const grd=g.createLinearGradient(0,surf,0,y0); grd.addColorStop(0,C.water); grd.addColorStop(1,C.water_deep);
+    g.fillStyle=grd; g.fillRect(x0,surf,xw-x0,y0-surf);
+    // 水面の波
+    g.save(); g.strokeStyle=C.paper; g.globalAlpha=.6; g.beginPath();
+    for(let x=x0;x<=xw;x+=4){ const y=surf+Math.sin(x/18+S.t*2)*1.5; x===x0?g.moveTo(x,y):g.lineTo(x,y);} g.stroke(); g.restore();
+    text(g,'▽ 水面',x0+10,surf-14,{size:13,color:C.accent});
+    // 容器
+    line(g,[[x0,y0-10*sc-10],[x0,y0],[xw,y0]],C.ink,3);
+    // 水門（右の壁）
+    rect(g,xw,y0-r.h*sc,10,r.h*sc,C.solid);
+    line(g,[[xw+10,y0-10*sc-10],[xw+10,y0]],C.ink,3);
+    // 圧力分布（三角形）を壁の外側に描き、矢印は壁を押す向き
+    // 三角形の横幅は底の圧力に比例（水銀などで大きくなる）
+    const Lmax=clamp(r.pmax/49050*120,20,330);
+    g.save(); g.fillStyle=C.hi; g.globalAlpha=.12; g.beginPath(); g.moveTo(xw+30,surf); g.lineTo(xw+30+Lmax,y0); g.lineTo(xw+30,y0); g.closePath(); g.fill(); g.restore();
+    const n=12;
+    for(let i=1;i<=n;i++){ const d=r.h*i/n, y=surf+d*sc, L=(d/r.h)*Lmax;
+      arrow(g,xw+30+L,y,xw+14,y,C.hi,1.6,8); }
+    line(g,[[xw+30,surf],[xw+30+Lmax,y0]],C.hi,1.2,[4,4]);
+    text(g,'圧力分布 p = ρgh',xw+40,surf+18,{size:13,color:C.hi});
+    // 全圧力の矢印（作用点）
+    const yP=surf+r.hP*sc;
+    arrow(g,xw+260,yP,xw+14,yP,C.accent,4,16);
+    text(g,'F = '+fmt(r.F/1000)+' kN',xw+180,yP-18,{size:15,weight:700,color:C.accent,align:'center'});
+    text(g,'作用点 h_P = '+fmt(r.hP)+' m',xw+180,yP+20,{size:13,color:C.accent,align:'center'});
+    // 図心
+    const yG=surf+r.hG*sc; line(g,[[xw-60,yG],[xw,yG]],C.ink,1,[3,3]); text(g,'図心',xw-64,yG,{align:'right',size:12,color:C.ink});
+    // 探針
+    if(S.probe!=null && S.probe<=r.h){ const y=surf+S.probe*sc, x=Math.min(S.pointer.x,xw-20);
+      g.save(); g.fillStyle=C.paper; g.beginPath(); g.arc(x,y,6,0,7); g.fill(); g.restore();
+      text(g,`深さ ${fmt(S.probe)} m：p = ${fmt(r.rho*9.81*S.probe/1000)} kPa`,x+12,y,{size:13,weight:700,bg:C.paper}); }
+  },
+  readout(S){ const r=this.calc(S); return [
+    ['底のゲージ圧 p = ρgh', fmt(r.pmax/1000)+' kPa'],
+    ['水門の面積 A = bh', fmt(r.A)+' m²'],
+    ['図心の深さ h_G', fmt(r.hG)+' m'],
+    ['全圧力 F = ρg h_G A', fmt(r.F/1000)+' kN'],
+    ['圧力中心 h_P', fmt(r.hP)+' m'],
+    ['h_P / h', fmt(r.hP/r.h)],
+  ]; }
+});
+
+SIMS.sort((a,b)=>['beginner', 'intermediate', 'advanced'].indexOf(a.level)-['beginner', 'intermediate', 'advanced'].indexOf(b.level)||(a.order||0)-(b.order||0));
+boot();
+
+</script>
