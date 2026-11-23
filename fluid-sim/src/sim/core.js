@@ -117,7 +117,7 @@ function select(id,force){
   const sim=SIMS.find(s=>s.id===id)||SIMS[0];
   if(cur===sim && !force) return;
   cur=sim;
-  document.querySelectorAll('#nav a').forEach(a=>{ if(a.dataset.id===sim.id) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  document.querySelectorAll('#nav a').forEach(a=>{ if(a.dataset.id===sim.id){ a.setAttribute('aria-current','page'); try{a.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){} } else a.removeAttribute('aria-current'); });
   const L=LEVELS[sim.level];
   const lv=document.getElementById('lvl'); lv.textContent=L.label; lv.style.background=`var(${L.color})`;
   document.getElementById('simname').textContent=sim.name;
