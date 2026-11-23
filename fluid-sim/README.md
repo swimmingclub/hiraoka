@@ -1,7 +1,7 @@
 # 流体力学 問題集とシミュレータ
 
-- 問題集（18問・初級/中級/上級）: https://claude.ai/artifact/A5ZD1Mg8MHVt1w7cuYYznc
-- シミュレータ（18本）: https://claude.ai/artifact/QA4b8ym6G5H3u4QgxXbN6c
+- 問題集（27問・初級/中級/上級）: https://claude.ai/artifact/A5ZD1Mg8MHVt1w7cuYYznc
+- シミュレータ（27本）: https://claude.ai/artifact/QA4b8ym6G5H3u4QgxXbN6c
 
 ## 構成
 - `problems.json` … 定理と問題のデータ（ここを直して再生成する）
@@ -14,3 +14,6 @@
 - 文字列の中に TeX で `$…$`（文中）や `$$…$$`（別行）と書くと、ビルド時に MathJax で SVG に変換して埋め込む
 - 初回のみ `cd tools && npm install` が必要（`tools/tex2svg.js`, `tools/mathify.py`）
 - キャンバス内の文字は `h_P` や `u_{max}` と書くと下付き文字で描く
+
+## 強調の記法
+- `**太字**` / `__下線__` / `==マーカー==` / `!!注意（赤）!!` を文字列中に書くと、M() が装飾して表示する
