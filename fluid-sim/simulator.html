@@ -356,6 +356,121 @@ defineSim({
       ['細い管の流速 v₂ = Q/A₂',fmt(v2)+' m/s'],['速度比 v₂/v₁ = (d₁/d₂)²',fmt(v2/S.P.v1)]]; }
 });
 
+// 中級：ニュートンの粘性法則とクエット流れ（圧力勾配つき＝NS 方程式の厳密解）
+defineSim({
+  id:'couette', level:'intermediate', order:4, name:'粘性法則とクエット・ポアズイユ流れ',
+  formula:'τ = μ du/dy　　u(y) = U·y/h + (1/2μ)(−dp/dx)·y(h − y)',
+  explain:'平行な 2 枚の板の間の流れは、ナビエ・ストークス方程式が 0 = −dp/dx + μ d²u/dy² に簡単化され、手で解けます。上板を速度 U で動かすだけなら直線分布（クエット流れ）、圧力勾配だけなら放物線分布（平面ポアズイユ流れ）、両方あればその足し算になります。壁のせん断応力は τ = μ du/dy（分布の傾き）です。',
+  hint:'「M4 の条件」と「A5 の条件」のボタンで問題の設定にできます。圧力勾配を負（流れと逆向き）にすると、下の方で逆流が起こります。軸受けの潤滑で見られる現象です。',
+  related:['M4','A5'],
+  params:[
+    {id:'U',label:'上板の速度 U',min:0,max:2,step:0.05,value:1,unit:'m/s'},
+    {id:'h',label:'すき間 h',min:0.5,max:5,step:0.1,value:2,unit:'mm'},
+    {id:'G',label:'圧力勾配 −dp/dx',min:-100000,max:100000,step:500,value:0,unit:'Pa/m',digits:0},
+    {id:'mu',label:'粘性係数 μ',type:'select',value:'0.05',options:[['0.001','水 (0.001 Pa·s)'],['0.05','軽油・潤滑油 (0.05 Pa·s)'],['0.1','油 (0.1 Pa·s)'],['1','グリセリン (1.0 Pa·s)']]},
+    {id:'A',label:'上板の面積 A',min:0.1,max:2,step:0.1,value:0.5,unit:'m²'},
+  ],
+  buttons:[
+    {label:'M4 の条件',action:S=>{setParam('U',1);setParam('h',2);setParam('G',0);setSel('mu','0.05');setParam('A',0.5);}},
+    {label:'A5 の条件',action:S=>{setParam('U',0);setParam('h',1);setParam('G',1000);setSel('mu','0.001');}},
+  ],
+  calc(S){ const U=S.P.U, h=S.P.h/1000, G=S.P.G, mu=+S.P.mu;
+    const u=y=>U*y/h + G/(2*mu)*y*(h-y);
+    const dudy=y=>U/h + G/(2*mu)*(h-2*y);
+    const tauB=mu*dudy(0), tauT=mu*dudy(h), q=U*h/2+G*h**3/(12*mu);
+    let umax=-1e9, umin=1e9; for(let i=0;i<=100;i++){const v=u(h*i/100); umax=Math.max(umax,v); umin=Math.min(umin,v);}
+    return {U,h,G,mu,u,dudy,tauB,tauT,q,umax,umin,F:tauT*S.P.A}; },
+  init(S){ S.parts=Array.from({length:180},()=>({x:Math.random()*700,y:Math.random()})); S.plate=0; },
+  scale(r){ return 220/Math.max(Math.abs(r.umax),Math.abs(r.umin),1e-6); },
+  step(S,dt){ const r=this.calc(S), k=this.scale(r)*0.9;
+    for(const p of S.parts){ p.x+=r.u(p.y*r.h)*k*dt; if(p.x>700)p.x-=700; if(p.x<0)p.x+=700; }
+    S.plate=(S.plate+r.U*k*dt)%80; },
+  draw(g,S){
+    const C=S.C, r=this.calc(S), y0=470, y1=140, x0=40, x1=740, Hh=y0-y1;
+    g.save(); g.fillStyle=C.m; g.globalAlpha=.15; g.fillRect(x0,y1,x1-x0,Hh); g.restore();
+    // 下板（固定）と上板（動く）
+    rect(g,x0,y0,x1-x0,16,C.solid); text(g,'固定板',x0+8,y0+34,{size:13,color:C.muted});
+    rect(g,x0,y1-16,x1-x0,16,C.solid);
+    g.save(); g.strokeStyle=C.ink; g.lineWidth=1; for(let x=x0+S.plate;x<x1;x+=80){ g.beginPath(); g.moveTo(x,y1-16); g.lineTo(x+10,y1); g.stroke(); } g.restore();
+    if(r.U>0){ arrow(g,x1-150,y1-34,x1-150+60,y1-34,C.ink,3,10); text(g,'U = '+fmt(r.U)+' m/s',x1-160,y1-34,{align:'right',size:14,weight:700}); }
+    // 粒子
+    g.fillStyle=C.water_deep; for(const p of S.parts){ g.beginPath(); g.arc(x0+p.x,y0-p.y*Hh,2.4,0,7); g.fill(); }
+    // 速度分布
+    const xs=790, k=this.scale(r)*0.6;
+    line(g,[[xs,y1],[xs,y0]],C.muted,1.5);
+    const pts=[]; for(let i=0;i<=40;i++){ const yy=r.h*i/40, u=r.u(yy), Y=y0-i/40*Hh; pts.push([xs+u*k,Y]); if(i%4===0) arrow(g,xs,Y,xs+u*k,Y,u>=0?C.accent:C.hi,1.3,7); }
+    line(g,pts,C.accent,2.5);
+    text(g,'速度分布 u(y)',xs,y1-30,{size:13,color:C.accent});
+    // せん断応力
+    text(g,'上板の τ = '+fmt(r.tauT)+' Pa',x0+8,y1+18,{size:14,weight:700,bg:C.paper});
+    text(g,'下板の τ = '+fmt(r.tauB)+' Pa',x0+8,y0-18,{size:14,weight:700,bg:C.paper});
+    if(r.umin<-1e-9) text(g,'逆流が起きています',(x0+x1)/2,y0-18,{align:'center',size:14,weight:700,color:C.hi,bg:C.paper});
+    text(g,'h = '+fmt(S.P.h)+' mm（拡大表示）',(x0+x1)/2,560,{align:'center',size:13,color:C.muted});
+  },
+  readout(S){ const r=this.calc(S); return [
+    ['最大流速 u_max',fmt(r.umax)+' m/s'],['単位幅流量 q',fmt(r.q)+' m²/s'],['平均流速 q/h',fmt(r.q/r.h)+' m/s'],
+    ['上板のせん断応力 τ',fmt(r.tauT)+' Pa'],['下板のせん断応力 τ_w',fmt(r.tauB)+' Pa'],
+    ['上板を動かす力 F = τA',fmt(r.F)+' N'],['必要な動力 FU',fmt(r.F*r.U)+' W']]; }
+});
+// select を外部から変更するための補助
+function setSel(id,v){ S.P[id]=v; const el=document.getElementById('p-'+cur.id+'-'+id); if(el){ el.value=v; el.dispatchEvent(new Event('change')); } }
+
+// 中級：ダルシー・ワイスバッハの式とムーディ線図
+function colebrook(Re,rel){ if(Re<2300) return 64/Re;
+  let f=0.02; for(let i=0;i<30;i++){ f=1/(-2*Math.log10(rel/3.7+2.51/(Re*Math.sqrt(f))))**2; } return f; }
+defineSim({
+  id:'darcy', level:'intermediate', order:5, name:'管摩擦損失（ダルシー・ワイスバッハ）',
+  formula:'h_f = f (L/d)(v²/2g)　　層流 f = 64/Re　　乱流 1/√f = −2 log(ε/3.7d + 2.51/(Re√f))',
+  explain:'管の中を流れると壁との摩擦でエネルギーが失われ、下流ほど圧力が下がります（並んだ水柱が直線的に低くなる）。損失ヘッドは管の長さと速度ヘッド v²/2g に比例し、比例係数が管摩擦係数 f です。f は層流なら 64/Re、乱流ならレイノルズ数と管壁の相対粗さ ε/d で決まり、それを図にしたものがムーディ線図です。',
+  hint:'流速を 2 倍にすると損失ヘッドはほぼ 4 倍、ポンプ動力はほぼ 8 倍になります。ムーディ線図の上の点が、粗さや Re によってどの曲線に乗るかを見ましょう。M5 の問題のように f = 0.02 と与えられたときは「f を指定する」をオンにします。',
+  related:['M5'],
+  params:[
+    {id:'v',label:'平均流速 v',min:0.05,max:5,step:0.05,value:2,unit:'m/s'},
+    {id:'d',label:'内径 d',min:1,max:50,step:1,value:10,unit:'cm'},
+    {id:'L',label:'管の長さ L',min:10,max:1000,step:10,value:200,unit:'m'},
+    {id:'eps',label:'管壁の粗さ ε',type:'select',value:'0.045',options:[['0.0015','引抜き管・ガラス (0.0015 mm)'],['0.045','商用鋼管 (0.045 mm)'],['0.26','鋳鉄管 (0.26 mm)'],['1.5','コンクリート管 (1.5 mm)']]},
+    {id:'fix',label:'f を指定する（f = 0.02）',type:'check',value:true},
+  ],
+  calc(S){ const nu=1e-6, d=S.P.d/100, v=S.P.v, Re=v*d/nu, rel=(+S.P.eps)/1000/d;
+    const fc=colebrook(Re,rel), f=S.P.fix?0.02:fc, hf=f*S.P.L/d*v*v/19.62, Q=Math.PI/4*d*d*v;
+    return {d,v,Re,rel,fc,f,hf,dp:1000*9.81*hf,Q,P:1000*9.81*Q*hf}; },
+  draw(g,S){
+    const C=S.C, r=this.calc(S);
+    // 上段：管と水柱
+    const x0=60, x1=900, cy=230, R=18, Hmax=150;
+    g.save(); g.fillStyle=C.water; g.globalAlpha=.3; g.fillRect(x0,cy-R,x1-x0,2*R); g.restore();
+    line(g,[[x0,cy-R],[x1,cy-R]],C.ink,3); line(g,[[x0,cy+R],[x1,cy+R]],C.ink,3);
+    const h0=r.hf+2, sc=Math.min(Hmax/h0, 15);
+    for(let i=0;i<5;i++){ const x=x0+60+i*(x1-x0-120)/4, head=h0-r.hf*i/4, top=cy-R-head*sc;
+      g.save(); g.fillStyle=C.water; g.globalAlpha=.8; g.fillRect(x-5,top,10,head*sc); g.restore();
+      line(g,[[x-6,cy-R],[x-6,cy-R-Hmax-20]],C.ink,1.2); line(g,[[x+6,cy-R],[x+6,cy-R-Hmax-20]],C.ink,1.2); }
+    line(g,[[x0+60,cy-R-h0*sc],[x1-60,cy-R-(h0-r.hf)*sc]],C.hi,1.5,[6,4]);
+    text(g,'動水勾配線（圧力が直線的に下がる）',x0+80,cy-R-Hmax-36,{size:13,color:C.hi});
+    arrow(g,x1-40,cy-R-h0*sc,x1-40,cy-R-(h0-r.hf)*sc,C.accent,1.5,8);
+    text(g,'h_f = '+fmt(r.hf)+' m',x1-46,cy-R-(h0-r.hf/2)*sc,{align:'right',size:14,weight:700,color:C.accent,bg:C.paper});
+    text(g,'L = '+fmt(S.P.L)+' m',(x0+x1)/2,cy+R+18,{align:'center',size:13,color:C.muted});
+    // 下段：ムーディ線図
+    const mx=120, my=300, mw=780, mh=250;
+    const X=Re=>mx+(Math.log10(Re)-3)/5*mw, Y=f=>my+mh-(Math.log10(f)-Math.log10(0.008))/(Math.log10(0.1)-Math.log10(0.008))*mh;
+    rect(g,mx,my,mw,mh,null,C.line,1);
+    [1e3,1e4,1e5,1e6,1e7,1e8].forEach(v=>{ line(g,[[X(v),my],[X(v),my+mh]],C.line,1); text(g,'10'+sup(Math.round(Math.log10(v))),X(v),my+mh+14,{align:'center',size:11,mono:true,color:C.muted}); });
+    [0.01,0.02,0.03,0.05,0.1].forEach(v=>{ line(g,[[mx,Y(v)],[mx+mw,Y(v)]],C.line,1); text(g,String(v),mx-6,Y(v),{align:'right',size:11,mono:true,color:C.muted}); });
+    text(g,'レイノルズ数 Re',mx+mw/2,my+mh+32,{align:'center',size:12,color:C.muted}); text(g,'f',mx-50,my+mh/2,{size:14,weight:700,color:C.muted});
+    const lam=[]; for(let e=3;e<=Math.log10(2300);e+=0.02) lam.push([X(10**e),Y(64/10**e)]); line(g,lam,C.b,2);
+    text(g,'層流 64/Re',X(1300),Y(64/1300)-14,{size:12,color:C.b});
+    [[0,'滑らか'],[1e-4,'ε/d=10⁻⁴'],[1e-3,'10⁻³'],[1e-2,'10⁻²']].forEach(([rel,lb])=>{ const pts=[];
+      for(let e=Math.log10(4000);e<=8;e+=0.04){ const f=colebrook(10**e,rel); pts.push([X(10**e),Y(f)]); }
+      line(g,pts,C.muted,1.2); text(g,lb,mx+mw-4,Y(colebrook(1e8,rel))+(rel===0?12:-9),{align:'right',size:11,color:C.muted}); });
+    const cur2=[]; for(let e=Math.log10(4000);e<=8;e+=0.04) cur2.push([X(10**e),Y(colebrook(10**e,r.rel))]); line(g,cur2,C.accent,2);
+    const px=X(clamp(r.Re,1e3,1e8)), py=Y(clamp(r.f,0.008,0.1));
+    g.fillStyle=C.hi; g.beginPath(); g.arc(px,py,7,0,7); g.fill();
+    text(g,'Re = '+fmt(r.Re)+', f = '+fmt(r.f),px+12,py-14,{size:13,weight:700,color:C.hi,bg:C.paper});
+  },
+  readout(S){ const r=this.calc(S); return [
+    ['レイノルズ数 Re',fmt(r.Re)],['相対粗さ ε/d',fmt(r.rel)],['f（コールブルック式）',fmt(r.fc)],['使った f',fmt(r.f)],
+    ['損失ヘッド h_f',fmt(r.hf)+' m'],['圧力損失 Δp',fmt(r.dp/1000)+' kPa'],['流量 Q',fmt(r.Q*1000)+' L/s'],['ポンプ動力 ρgQh_f',fmt(r.P)+' W']]; }
+});
+
 // 初級：静水圧と平面壁の全圧力
 defineSim({
   id:'hydrostatic', level:'beginner', order:1, name:'静水圧と水門の全圧力',
@@ -651,6 +766,59 @@ defineSim({
   readout(S){ const Re=this.Re(S); return [
     ['レイノルズ数 Re = vd/ν',fmt(Re)],['流れの状態',Re<2300?'層流':(Re<4000?'遷移域':'乱流')],
     ['臨界流速 v_c（Re = 2300）',fmt(2300*(+S.P.nu)/(S.P.d/100))+' m/s']]; }
+});
+
+// 中級：ストークスの抵抗法則と終端速度
+defineSim({
+  id:'stokes', level:'intermediate', order:6, name:'ストークスの抵抗と終端速度',
+  formula:'D = 3πμdv　　v_t = (ρ_s − ρ) g d² / (18μ)　　（Re = ρvd/μ < 1 で有効）',
+  explain:'とても遅い流れ（Re ≪ 1）では、球の抵抗は速度に比例します。落とした粒子は加速しますが、速くなるほど抵抗が増え、重力 − 浮力 = 抵抗 となったところで一定の速度（終端速度）になります。速度は v(t) = v_t(1 − e^(−t/τ)) と指数関数的に近づき、τ = m/(3πμd) です。',
+  hint:'粒径を 10 倍にすると終端速度は 100 倍になります。粒径を大きくしすぎると Re が 1 を超え、ストークスの法則が使えなくなります（右上に警告が出ます）。',
+  related:['M6'],
+  params:[
+    {id:'d',label:'粒子の直径 d',min:0.01,max:1,step:0.01,value:0.1,unit:'mm'},
+    {id:'rs',label:'粒子の密度 ρ_s',min:1100,max:8000,step:50,value:2650,unit:'kg/m³'},
+    {id:'fl',label:'流体',type:'select',value:'0.001,1000',options:[['0.001,1000','水 (μ = 0.001, ρ = 1000)'],['1,1260','グリセリン (μ = 1.0, ρ = 1260)'],['0.1,900','油 (μ = 0.1, ρ = 900)'],['0.0000181,1.2','空気 (μ = 1.81×10⁻⁵, ρ = 1.2)']]},
+  ],
+  buttons:[{label:'もう一度落とす',action:S=>{S.tt=0;}}],
+  liveReadout:true,
+  calc(S){ const [mu,rho]=S.P.fl.split(',').map(Number), d=S.P.d/1000, rs=S.P.rs;
+    const vt=(rs-rho)*9.81*d*d/(18*mu), m=rs*Math.PI/6*d**3, tau=m/(3*Math.PI*mu*d), Re=rho*vt*d/mu;
+    return {mu,rho,d,rs,vt,m,tau,Re,W:m*9.81,B:rho*Math.PI/6*d**3*9.81}; },
+  init(S){ S.tt=0; },
+  step(S,dt){ S.tt+=dt; if(S.tt>7) S.tt=0; },
+  draw(g,S){
+    const C=S.C, r=this.calc(S), T=S.tt/1.2; // 1.2 秒 = τ
+    const v=r.vt*(1-Math.exp(-T)), dist=T-(1-Math.exp(-T)); // 位置（v_t·τ 単位）
+    // 左：液柱
+    const cx=150, top=60, bot=560;
+    g.save(); g.fillStyle=C.water; g.globalAlpha=.25; g.fillRect(cx-70,top,140,bot-top); g.restore();
+    line(g,[[cx-70,top],[cx-70,bot],[cx+70,bot],[cx+70,top]],C.ink,2);
+    const y=top+20+clamp(dist*70,0,bot-top-40);
+    g.fillStyle=C.wood; g.beginPath(); g.arc(cx,y,14,0,7); g.fill(); g.strokeStyle=C.ink; g.lineWidth=1.5; g.stroke();
+    const fs=60/r.W;
+    arrow(g,cx-34,y,cx-34,y+r.W*fs,C.ink,3,10); text(g,'重力',cx-40,y+r.W*fs,{align:'right',size:12});
+    arrow(g,cx+34,y,cx+34,y-r.B*fs,C.accent,3,10); text(g,'浮力',cx+40,y-r.B*fs,{size:12,color:C.accent});
+    const D=3*Math.PI*r.mu*r.d*v; if(D*fs>2){ arrow(g,cx,y-16,cx,y-16-D*fs,C.hi,3,10); text(g,'抵抗',cx+6,y-26-D*fs,{size:12,color:C.hi}); }
+    text(g,'（粒子は拡大表示）',cx,bot+20,{align:'center',size:12,color:C.muted});
+    // 右：v-t グラフ
+    const gx=330, gy=80, gw=580, gh=380;
+    rect(g,gx,gy,gw,gh,null,C.line,1);
+    for(let i=0;i<=5;i++){ const x=gx+i/5*gw; line(g,[[x,gy+gh],[x,gy+gh+6]],C.muted,1); text(g,i+'τ',x,gy+gh+20,{align:'center',size:12,mono:true,color:C.muted}); }
+    text(g,'時間 t（τ = '+fmt(r.tau*1000)+' ms）',gx+gw,gy+gh+44,{align:'right',size:13,color:C.muted});
+    const Yv=vv=>gy+gh-vv/r.vt*gh*0.8;
+    line(g,[[gx,Yv(r.vt)],[gx+gw,Yv(r.vt)]],C.hi,1.5,[6,4]);
+    text(g,'終端速度 v_t = '+fmt(r.vt*1000)+' mm/s',gx+gw-8,Yv(r.vt)-14,{align:'right',size:14,weight:700,color:C.hi});
+    const pts=[]; for(let i=0;i<=100;i++){ const t=5*i/100; pts.push([gx+t/5*gw,Yv(r.vt*(1-Math.exp(-t)))]); } line(g,pts,C.muted,1.2,[3,3]);
+    const pts2=[]; for(let i=0;i<=100;i++){ const t=Math.min(T,5)*i/100; pts2.push([gx+t/5*gw,Yv(r.vt*(1-Math.exp(-t)))]); } line(g,pts2,C.accent,3);
+    text(g,'速度 v',gx+6,gy+14,{size:13,color:C.muted});
+    // Re チェック
+    const ok=r.Re<1;
+    text(g,'Re = '+fmt(r.Re)+(ok?'（< 1：ストークスの法則が使える）':'（> 1：ストークスの法則の適用範囲外）'),gx,gy-34,{size:14,weight:700,color:ok?C.b:C.a});
+  },
+  readout(S){ const r=this.calc(S); return [
+    ['終端速度 v_t',fmt(r.vt*1000)+' mm/s'],['レイノルズ数 Re',fmt(r.Re)],['時定数 τ = m/(3πμd)',fmt(r.tau*1000)+' ms'],
+    ['重力 − 浮力',fmt(r.W-r.B)+' N'],['終端での抵抗 3πμdv_t',fmt(3*Math.PI*r.mu*r.d*r.vt)+' N']]; }
 });
 
 // 初級：トリチェリの定理
