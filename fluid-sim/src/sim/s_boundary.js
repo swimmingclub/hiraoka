@@ -9,7 +9,7 @@ const BLASIUS=(()=>{ const h=0.01, N=1000, fp=[0]; let f=0, f1=0, f2=0.33206;
 defineSim({
   id:'boundary', level:'advanced', order:4, name:'境界層（ブラジウスの解）',
   formula:'$$\\delta \\approx \\frac{5.0\\,x}{\\sqrt{Re_x}} \\qquad \\tau_w = \\frac{0.332\\,\\rho U^2}{\\sqrt{Re_x}} \\qquad \\overline{C_f} = \\frac{1.328}{\\sqrt{Re_L}} \\qquad Re_x = \\frac{Ux}{\\nu}$$',
-  explain:'粘性のある流体が平板に沿って流れると、板の表面では速度が 0 になり、その影響は表面近くの薄い層（境界層）に限られます。層流境界層の厚さ $\\delta$ は $\\sqrt{x}$ に比例し、下流ほど厚くなります。$Re_x$ が約 $5 \\times 10^5$ を超えると乱流境界層に遷移し、急に厚くなります。',
+  explain:'**粘性のある流体が平板に沿って流れると、板の表面では速度が 0 になり、その影響は表面近くの薄い層（境界層）に限られます**。層流境界層の厚さ $\\delta$ は $\\sqrt{x}$ に比例し、下流ほど厚くなります。$Re_x$ が約 $5 \\times 10^5$ を超えると乱流境界層に遷移し、急に厚くなります。',
   hint:'縦方向は大きく拡大して描いています。流速を上げると境界層は薄くなります（$\\delta \\propto 1/\\sqrt{U}$）。速度分布の形は場所によらず相似（$\\eta = y\\sqrt{U/\\nu x}$ で重なる）なのがブラジウス解の特徴です。',
   related:['A4'],
   params:[

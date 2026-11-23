@@ -6,17 +6,17 @@
 /* Layout: 実験ノート風。左に級ごとのタブ、定理カード→計算問題の順。解説は折りたたみ */
 :root{
   --bg:#f3f6f7; --paper:#ffffff; --ink:#14232b; --muted:#5a6d77; --line:#d4dee2;
-  --accent:#0b6e8a; --accent-soft:#dcefF4; --b:#2f8f5b; --m:#c07a12; --a:#b23a48; --code:#eef3f5;
+  --accent:#0b6e8a; --accent-soft:#dcefF4; --b:#2f8f5b; --m:#c07a12; --a:#b23a48; --code:#eef3f5; --hl:#ffd75e99;
   --f-display:"Murecho","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
   --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
-  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33; color-scheme:dark}}
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33; --hl:#b0892680; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
-  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33; color-scheme:dark}
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33; --hl:#b0892680; color-scheme:dark}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75}
 .wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
 header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.2;margin:0 0 6px;text-wrap:balance}

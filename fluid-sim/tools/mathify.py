@@ -48,14 +48,26 @@ def strings_in(obj):
 
 # ページに埋め込む置き換え関数（MATH はキー→SVG の辞書）
 M_JS = r"""
+// 数式（$…$, $$…$$）を SVG に置き換え、残りの文に強調記法を適用する
+//   **太字**  __下線__  ==マーカー==  !!注意（赤）!!
 function M(s){ const esc=t=>t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-  let out='', last=0; const re=/\$\$([\s\S]+?)\$\$|\$(?!\{)([^$\n]+?)\$/g; let m;
-  while((m=re.exec(s))){ out+=esc(s.slice(last,m.index)); last=re.lastIndex;
-    if(m[1]!==undefined){ const v=MATH['D:'+m[1]]; out+=v?'<span class="mjx-d">'+v+'</span>':esc(m[1]); }
-    else { const v=MATH[m[2]]; out+=v?'<span class="mjx-i">'+v+'</span>':esc(m[2]); } }
-  return out+esc(s.slice(last)); }
+  const keep=[]; const re=/\$\$([\s\S]+?)\$\$|\$(?!\{)([^$\n]+?)\$/g;
+  let t=s.replace(re,(all,d,i)=>{ let h;
+    if(d!==undefined){ const v=MATH['D:'+d]; h=v?'<span class="mjx-d">'+v+'</span>':esc(d); }
+    else { const v=MATH[i]; h=v?'<span class="mjx-i">'+v+'</span>':esc(i); }
+    keep.push(h); return '\u0000'+(keep.length-1)+'\u0000'; });
+  t=esc(t)
+    .replace(/\*\*([\s\S]+?)\*\*/g,'<strong class="em-b">$1</strong>')
+    .replace(/__([\s\S]+?)__/g,'<span class="em-u">$1</span>')
+    .replace(/==([\s\S]+?)==/g,'<mark class="em-hl">$1</mark>')
+    .replace(/!!([\s\S]+?)!!/g,'<strong class="em-warn">$1</strong>');
+  return t.replace(/\u0000(\d+)\u0000/g,(a,n)=>keep[+n]); }
 """
 MATH_CSS = """
+.em-b{font-weight:700;color:var(--ink)}
+.em-u{text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px;color:var(--ink)}
+mark.em-hl{background:linear-gradient(transparent 52%,var(--hl) 52%);color:var(--ink);padding:0 1px}
+.em-warn{font-weight:700;color:var(--a)}
 .mjx-i svg{display:inline-block;overflow:visible}
 @media (max-width:600px){.mjx-i{display:inline-block;max-width:100%;overflow-x:auto;overflow-y:hidden;vertical-align:middle;padding-block:2px}}
 .mjx-d{display:flex;flex-wrap:wrap;align-items:center;column-gap:2.2em;row-gap:6px;padding-block:4px;max-width:100%}
