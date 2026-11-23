@@ -251,9 +251,114 @@ function boot(){
   requestAnimationFrame(frame);
 }
 
+// 初級：アルキメデスの原理（浮力）
+defineSim({
+  id:'buoyancy', level:'beginner', order:3, name:'アルキメデスの原理（浮力）',
+  formula:'F_B = ρ_流体 g V_排除　　浮いているとき：F_B = mg',
+  explain:'物体には、押しのけた流体の重さに等しい浮力が上向きに働きます。浮いて静止した物体では浮力と重力がつり合うので、沈む深さの割合は密度の比 ρ_物体/ρ_流体 になります。',
+  hint:'物体の密度を 1000 kg/m³ より大きくすると水に沈みます。液体を水銀に変えると、鉄（7870 kg/m³）でも浮くでしょうか？ 上から押す力を加えて、全部沈めるのに必要な力も確かめましょう。',
+  related:['B3'],
+  liveReadout:true,
+  params:[
+    {id:'a',label:'立方体の一辺 a',min:5,max:25,step:1,value:10,unit:'cm'},
+    {id:'rb',label:'物体の密度 ρ_物体',min:100,max:8000,step:10,value:600,unit:'kg/m³'},
+    {id:'rf',label:'液体',type:'select',value:'1000',options:[['1000','水 (1000)'],['1025','海水 (1025)'],['850','油 (850)'],['13600','水銀 (13600)']]},
+    {id:'F',label:'上から押す力 F',min:0,max:100,step:0.1,value:0,unit:'N'},
+  ],
+  buttons:[{label:'持ち上げて落とす',action:S=>{S.y=-0.05;S.v=0;}}],
+  K:900, D:0.32, // 1 m = 900 px, 水槽の深さ 0.32 m
+  init(S){ S.y=-0.04; S.v=0; },
+  onParam(S,id){ if(id==='a') {S.y=Math.min(S.y,this.D); } },
+  forces(S){ const a=S.P.a/100, m=S.P.rb*a**3, d=clamp(S.y,0,a), FB=+S.P.rf*9.81*a*a*d;
+    return {a,m,d,FB,W:m*9.81}; },
+  step(S,dt){
+    for(let i=0;i<10;i++){ const h=dt/10, f=this.forces(S);
+      let acc=(f.W+S.P.F-f.FB)/f.m - 4*S.v*(S.y>0?1:0.2);
+      S.v+=acc*h; S.y+=S.v*h;
+      if(S.y>this.D){ S.y=this.D; S.v=0; } }
+  },
+  draw(g,S){
+    const C=S.C, K=this.K, f=this.forces(S), surf=230, bot=surf+this.D*K, xl=200, xr=760;
+    const fluid=+S.P.rf===13600?C.solid:(+S.P.rf===850?C.m:C.water);
+    g.save(); g.globalAlpha=+S.P.rf===850?.4:.8; g.fillStyle=fluid; g.fillRect(xl,surf,xr-xl,bot-surf); g.restore();
+    line(g,[[xl,surf-140],[xl,bot],[xr,bot],[xr,surf-140]],C.ink,3);
+    text(g,'▽ 液面',xr-80,surf-14,{size:13,color:C.accent});
+    const a=f.a*K, cx=(xl+xr)/2, yb=surf+S.y*K;
+    // 排除体積（水面下の部分）を強調
+    rect(g,cx-a/2,yb-a,a,a,C.wood,C.ink,2);
+    if(f.d>0){ g.save(); g.fillStyle=C.lo; g.globalAlpha=.25; g.fillRect(cx-a/2,yb-f.d*K,a,f.d*K); g.restore();
+      text(g,'排除体積',cx,yb-f.d*K/2,{align:'center',size:13,color:C.ink}); }
+    // 力の矢印（長さは重さ基準）
+    const s=110/Math.max(f.W,S.P.F+0.01,f.FB*0.5);
+    arrow(g,cx-30,yb-a/2,cx-30,yb-a/2+f.W*s,C.ink,4,14); text(g,'重力 '+fmt(f.W)+' N',cx-40,yb-a/2+f.W*s,{align:'right',size:14,weight:700,bg:C.paper});
+    if(f.FB>0){ arrow(g,cx+30,yb-a/2,cx+30,yb-a/2-f.FB*s,C.accent,4,14); text(g,'浮力 '+fmt(f.FB)+' N',cx+40,yb-a/2-f.FB*s,{size:14,weight:700,color:C.accent,bg:C.paper}); }
+    if(S.P.F>0){ arrow(g,cx,yb-a-80,cx,yb-a-4,C.hi,4,14); text(g,'押す力 '+fmt(S.P.F)+' N',cx+12,yb-a-70,{size:14,weight:700,color:C.hi}); }
+    if(S.y>=this.D-1e-4) text(g,'底に着いた（底からの抗力が加わる）',cx,bot+24,{align:'center',size:14,color:C.hi});
+  },
+  readout(S){ const f=this.forces(S), a=f.a, ratio=S.P.rb/+S.P.rf, FBfull=+S.P.rf*9.81*a**3;
+    return [
+      ['物体の重さ mg', fmt(f.W)+' N'],
+      ['いまの浮力 F_B', fmt(f.FB)+' N'],
+      ['沈んでいる深さ d', fmt(f.d*100)+' cm'],
+      ['理論：密度比 ρ_物体/ρ_流体', fmt(ratio)],
+      ['理論：浮くときの d = a×密度比', ratio<1?fmt(S.P.a*ratio)+' cm':'沈む'],
+      ['全没に必要な力 F_B,全 − mg', ratio<1?fmt(FBfull-f.W)+' N':'不要（沈む）'],
+    ]; }
+});
+
+// 初級：連続の式
+defineSim({
+  id:'continuity', level:'beginner', order:4, name:'連続の式（質量保存）',
+  formula:'Q = A₁v₁ = A₂v₂　　v₂ = v₁ (d₁/d₂)²',
+  explain:'水は縮まないので、管のどの断面でも 1 秒あたりに通る体積（流量 Q）は同じです。断面積が小さいところでは、同じ量を通すために流れが速くなります。粒の流れる速さと、同じ時刻に入った色つきの「水のかたまり」の長さに注目しましょう。',
+  hint:'細い管の直径を半分にすると、流速は何倍になるでしょう？（答え：4 倍）。色つきのかたまりは、細い部分で細長く伸びます。体積は変わりません。',
+  related:['B4'],
+  params:[
+    {id:'v1',label:'太い管の流速 v₁',min:0.2,max:4,step:0.1,value:2,unit:'m/s'},
+    {id:'d1',label:'太い管の内径 d₁',min:4,max:20,step:0.5,value:10,unit:'cm'},
+    {id:'d2',label:'細い管の内径 d₂',min:2,max:20,step:0.5,value:5,unit:'cm'},
+  ],
+  init(S){ S.parts=[]; for(let i=0;i<260;i++) S.parts.push({x:60+Math.random()*840,e:Math.random()*2-1}); S.slug=0; },
+  R(S,x){ const sc=12, r1=S.P.d1*sc/2, r2=S.P.d2*sc/2; // 1 cm = 12 px
+    if(x<360) return r1; if(x>540) return r2; const t=(x-360)/180, s=t*t*(3-2*t); return lerp(r1,r2,s); },
+  vis(S,x){ const r1=this.R(S,0), r=this.R(S,x); return S.P.v1*(r1/r)**2; },
+  step(S,dt){ const k=45; // 1 m/s を 45 px/s で表示
+    for(const p of S.parts){ p.x+=this.vis(S,p.x)*k*dt; if(p.x>900){p.x=60;p.e=Math.random()*2-1;} }
+    S.slug+=dt; if(S.slug>4) S.slug=0; },
+  draw(g,S){
+    const C=S.C, cy=300, k=45;
+    // 管の外形
+    const top=[],bot=[]; for(let x=60;x<=900;x+=6){top.push([x,cy-this.R(S,x)]);bot.push([x,cy+this.R(S,x)]);}
+    g.save(); g.fillStyle=C.water; g.globalAlpha=.25; g.beginPath(); top.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p)); bot.slice().reverse().forEach(p=>g.lineTo(...p)); g.fill(); g.restore();
+    line(g,top,C.ink,3); line(g,bot,C.ink,3);
+    // 同時に入った水のかたまり（体積一定）
+    const t=S.slug; let xa=60, xb=60, tt=0;
+    // かたまりの先頭と後尾を時間積分で求める
+    const adv=(x,T)=>{ let tm=0; while(tm<T){ x+=this.vis(S,x)*k*0.02; tm+=0.02; } return x; };
+    xb=adv(60,t); xa=adv(60,Math.max(0,t-0.8));
+    if(xb<900){ g.save(); g.fillStyle=C.hi; g.globalAlpha=.28; g.beginPath();
+      for(let x=xa;x<=xb;x+=3) g.lineTo(x,cy-this.R(S,x)); for(let x=xb;x>=xa;x-=3) g.lineTo(x,cy+this.R(S,x)); g.fill(); g.restore(); }
+    // 粒子
+    g.fillStyle=C.water_deep;
+    for(const p of S.parts){ const y=cy+p.e*this.R(S,p.x)*0.9; g.beginPath(); g.arc(p.x,y,2.6,0,7); g.fill(); }
+    // 速度矢印
+    const v2=this.vis(S,800);
+    arrow(g,150,cy-this.R(S,150)-40,150+S.P.v1*30,cy-this.R(S,150)-40,C.accent,3,10);
+    text(g,'v₁ = '+fmt(S.P.v1)+' m/s',150,cy-this.R(S,150)-62,{size:15,weight:700,color:C.accent});
+    arrow(g,640,cy-this.R(S,800)-40,640+Math.min(v2*30,250),cy-this.R(S,800)-40,C.accent,3,10);
+    text(g,'v₂ = '+fmt(v2)+' m/s',640,cy-this.R(S,800)-62,{size:15,weight:700,color:C.accent});
+    text(g,'A₁ = '+fmt(Math.PI/4*S.P.d1**2)+' cm²',150,cy+this.R(S,150)+28,{size:13,color:C.muted});
+    text(g,'A₂ = '+fmt(Math.PI/4*S.P.d2**2)+' cm²',640,cy+this.R(S,800)+28,{size:13,color:C.muted});
+    text(g,'赤いかたまり＝同じ体積の水',480,560,{align:'center',size:13,color:C.hi});
+  },
+  readout(S){ const A1=Math.PI/4*(S.P.d1/100)**2, A2=Math.PI/4*(S.P.d2/100)**2, Q=A1*S.P.v1, v2=Q/A2;
+    return [['断面積 A₁',fmt(A1*1e4)+' cm²'],['断面積 A₂',fmt(A2*1e4)+' cm²'],['流量 Q = A₁v₁',fmt(Q*1000)+' L/s'],
+      ['細い管の流速 v₂ = Q/A₂',fmt(v2)+' m/s'],['速度比 v₂/v₁ = (d₁/d₂)²',fmt(v2/S.P.v1)]]; }
+});
+
 // 初級：静水圧と平面壁の全圧力
 defineSim({
-  id:'hydrostatic', level:'beginner', name:'静水圧と水門の全圧力',
+  id:'hydrostatic', level:'beginner', order:1, name:'静水圧と水門の全圧力',
   formula:'p = ρgh　　F = ρg h_G A　　h_P = h_G + I_G/(h_G A)',
   explain:'静止した水の圧力は深さに比例して大きくなり、壁を垂直に押します。圧力は三角形に分布するので、合力（全圧力）は図心より深い位置（長方形なら水深の 2/3）に作用します。',
   hint:'水深を 2 倍にすると、全圧力は何倍になるでしょう？（答え：4 倍。圧力も面積も 2 倍になるから）。水の中をクリックすると、その深さの圧力が表示されます。',
@@ -314,6 +419,65 @@ defineSim({
     ['全圧力 F = ρg h_G A', fmt(r.F/1000)+' kN'],
     ['圧力中心 h_P', fmt(r.hP)+' m'],
     ['h_P / h', fmt(r.hP/r.h)],
+  ]; }
+});
+
+// 初級：パスカルの原理（油圧ジャッキ）
+defineSim({
+  id:'pascal', level:'beginner', order:2, name:'パスカルの原理（油圧ジャッキ）',
+  formula:'p = F₁/A₁ = F₂/A₂　　A₁x₁ = A₂x₂',
+  explain:'密閉した液体に加えた圧力は、液体のすべての点に同じ大きさで伝わります。断面積の大きいピストンには、面積比の分だけ大きな力が出ます。そのかわり動く距離は面積比の分だけ小さくなり、仕事（力×距離）は両側で等しくなります。',
+  hint:'大ピストンの直径を 2 倍にすると、持ち上げる力は何倍になるでしょう？ 小ピストンを押し込んで、大ピストンがどれだけ上がるかも見てみましょう。',
+  related:['B2'],
+  params:[
+    {id:'F1',label:'小ピストンを押す力 F₁',min:10,max:300,step:5,value:100,unit:'N'},
+    {id:'d1',label:'小ピストンの直径 d₁',min:1,max:6,step:0.5,value:2,unit:'cm'},
+    {id:'d2',label:'大ピストンの直径 d₂',min:8,max:40,step:1,value:20,unit:'cm'},
+    {id:'x1',label:'小ピストンの押し込み量 x₁',min:0,max:20,step:0.5,value:10,unit:'cm'},
+  ],
+  calc(S){ const P=S.P, A1=Math.PI/4*(P.d1/100)**2, A2=Math.PI/4*(P.d2/100)**2, p=P.F1/A1;
+    return {A1,A2,p,F2:p*A2,ratio:A2/A1,x2:P.x1*A1/A2,W1:P.F1*P.x1/100}; },
+  init(S){ S.shown=0; },
+  step(S,dt){ S.shown+= (S.P.x1-S.shown)*Math.min(1,dt*4); },
+  draw(g,S){
+    const C=S.C, r=this.calc(S), sc=8; // 1 cm = 8 px
+    const base=470, top=180, xL=220, xR=640;
+    const w1=Math.max(S.P.d1*sc,8), w2=S.P.d2*sc;
+    const x1=S.shown, x2=x1*r.A1/r.A2;
+    const yP1=top+40+x1*sc, yP2=top+40-x2*sc;
+    // 油（下の連結管と両シリンダ）
+    g.fillStyle=C.m; g.globalAlpha=.35;
+    g.fillRect(xL-w1/2,yP1,w1,base-yP1); g.fillRect(xR-w2/2,yP2,w2,base-yP2);
+    g.fillRect(xL-w1/2,base,xR+w2/2-(xL-w1/2),40); g.globalAlpha=1;
+    // 容器の線
+    line(g,[[xL-w1/2,top-20],[xL-w1/2,base+40],[xR+w2/2,base+40],[xR+w2/2,top-20]],C.ink,3);
+    line(g,[[xL+w1/2,top-20],[xL+w1/2,base],[xR-w2/2,base],[xR-w2/2,top-20]],C.ink,3);
+    // ピストン
+    rect(g,xL-w1/2,yP1-16,w1,16,C.solid,C.ink,1.5);
+    rect(g,xR-w2/2,yP2-16,w2,16,C.solid,C.ink,1.5);
+    // 大ピストンに載せた荷物
+    rect(g,xR-60,yP2-96,120,80,C.wood,C.ink,1.5);
+    text(g,fmt(r.F2/9.81)+' kg 相当',xR,yP2-56,{align:'center',size:14,weight:700});
+    // 力の矢印
+    arrow(g,xL,yP1-120,xL,yP1-20,C.hi,4,14);
+    text(g,'F₁ = '+fmt(S.P.F1)+' N',xL+16,yP1-100,{size:15,weight:700,color:C.hi});
+    const L2=clamp(40*Math.log10(r.F2/S.P.F1*10),30,150);
+    arrow(g,xR+w2/2+50,yP2+L2-20,xR+w2/2+50,yP2-20,C.accent,5,16);
+    text(g,'F₂ = '+fmt(r.F2)+' N',xR+w2/2+64,yP2+10,{size:15,weight:700,color:C.accent});
+    // 圧力表示
+    text(g,'どこでも同じ圧力 p = '+fmt(r.p/1000)+' kPa',(xL+xR)/2,base+20,{align:'center',size:14,weight:700,bg:C.paper});
+    // 移動量
+    line(g,[[xL-w1/2-40,top+40],[xL-w1/2-10,top+40]],C.muted,1,[3,3]);
+    if(x1>0.2){ arrow(g,xL-w1/2-24,top+40,xL-w1/2-24,yP1,C.muted,1.5,8); text(g,'x₁ = '+fmt(S.P.x1)+' cm',xL-w1/2-30,(top+40+yP1)/2,{align:'right',size:13,color:C.muted}); }
+    text(g,'x₂ = '+fmt(r.x2*10)+' mm（上昇）',xR-w2/2-14,top+20,{align:'right',size:13,color:C.muted});
+  },
+  readout(S){ const r=this.calc(S); return [
+    ['面積比 A₂/A₁', fmt(r.ratio)],
+    ['圧力 p = F₁/A₁', fmt(r.p/1000)+' kPa'],
+    ['大ピストンの力 F₂', fmt(r.F2)+' N'],
+    ['大ピストンの上昇 x₂', fmt(r.x2*10)+' mm'],
+    ['仕事 F₁x₁', fmt(r.W1)+' J'],
+    ['仕事 F₂x₂', fmt(r.F2*r.x2/100)+' J'],
   ]; }
 });
 

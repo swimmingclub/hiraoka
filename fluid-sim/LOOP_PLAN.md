@@ -1,6 +1,6 @@
 # 流体力学シミュレータ ループ計画（全15周・1分間隔）
 
-状態: 現在の周回 = 6 （各周回の最初にこの値を+1して記録する）
+状態: 現在の周回 = 7 （各周回の最初にこの値を+1して記録する）
 
 ## 周回ごとの担当
 | 周 | 内容 |
@@ -36,3 +36,4 @@
 - 周4: 中級(M1-M6)・上級(A1-A6)の定理12件・問題12問を追加。sim id: hydrostatic,pascal,buoyancy,continuity,torricelli,venturi,momentum,reynolds,poiseuille,couette,darcy,stokes,cylinder(kutta含む),potential,boundary,navierstokes,dimensional
 - 周5: 問題集 problems.html を公開 https://claude.ai/artifact/A5ZD1Mg8MHVt1w7cuYYznc （build.py でJSONから生成。シミュレータURL確定後に python3 build.py <URL> で再生成・再公開）
 - 周6: シミュレータ基盤(src/sim/shell.html, core.js, build_sim.py)と静水圧シミュ(s_hydrostatic.js)を作成。描画は960×600論理座標、defineSimで登録
+- 周7: 初級シミュ pascal / buoyancy / continuity を追加（ブラウザでエラーなし確認）
