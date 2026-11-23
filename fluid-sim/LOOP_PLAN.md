@@ -1,6 +1,6 @@
 # 流体力学シミュレータ ループ計画（全15周・1分間隔）
 
-状態: 現在の周回 = 8 （各周回の最初にこの値を+1して記録する）
+状態: 現在の周回 = 9 （各周回の最初にこの値を+1して記録する）
 
 ## 周回ごとの担当
 | 周 | 内容 |
@@ -38,3 +38,4 @@
 - 周6: シミュレータ基盤(src/sim/shell.html, core.js, build_sim.py)と静水圧シミュ(s_hydrostatic.js)を作成。描画は960×600論理座標、defineSimで登録
 - 周7: 初級シミュ pascal / buoyancy / continuity を追加（ブラウザでエラーなし確認）
 - 周8: 初級シミュ torricelli / venturi(ピトー管含む) を追加。初級6本完了
+- 周9: 中級シミュ momentum(曲げ角β・動く板) / reynolds(着色実験) / poiseuille を追加
