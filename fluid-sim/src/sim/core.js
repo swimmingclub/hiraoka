@@ -36,13 +36,20 @@ function arrow(g,x1,y1,x2,y2,color,w=2,head=10){
   g.lineTo(x2-h*Math.cos(ang-0.4),y2-h*Math.sin(ang-0.4));
   g.lineTo(x2-h*Math.cos(ang+0.4),y2-h*Math.sin(ang+0.4)); g.closePath(); g.fill(); g.restore();
 }
+// 「h_P」「u_{max}」のような下付き文字を小さく下げて描く
 function text(g,s,x,y,o={}){
-  g.save(); g.fillStyle=o.color||S.C.ink; g.font=`${o.weight||500} ${(o.size||15)*1.2}px ${o.mono?S.C.fmono:S.C.fbody}`;
-  g.textAlign=o.align||'left'; g.textBaseline=o.base||'middle';
-  if(o.bg){ const m=g.measureText(s), pw=6, h=(o.size||15)*1.2+6;
-    let bx=x; if(g.textAlign==='center') bx-=m.width/2; else if(g.textAlign==='right') bx-=m.width;
-    g.fillStyle=o.bg; g.fillRect(bx-pw,y-h/2,m.width+pw*2,h); g.fillStyle=o.color||S.C.ink; }
-  g.fillText(s,x,y); g.restore();
+  const size=(o.size||15)*1.2, font=w=>`${o.weight||500} ${w}px ${o.mono?S.C.fmono:S.C.fbody}`;
+  const parts=[]; let last=0; const re=/_\{([^}]*)\}|_([^\s=,:：（）()\/+−·]+)/g; let m;
+  while((m=re.exec(s))){ if(m.index>last) parts.push([s.slice(last,m.index),0]); parts.push([m[1]??m[2],1]); last=re.lastIndex; }
+  if(last<s.length) parts.push([s.slice(last),0]);
+  g.save(); g.textBaseline=o.base||'middle'; g.textAlign='left';
+  const widths=parts.map(([t,sub])=>{ g.font=font(sub?size*0.72:size); return g.measureText(t).width; });
+  const tw=widths.reduce((a,b)=>a+b,0);
+  let bx=x; if((o.align||'left')==='center') bx-=tw/2; else if(o.align==='right') bx-=tw;
+  if(o.bg){ const pw=6, h=size+6; g.fillStyle=o.bg; g.fillRect(bx-pw,y-h/2,tw+pw*2,h); }
+  g.fillStyle=o.color||S.C.ink;
+  parts.forEach(([t,sub],i)=>{ g.font=font(sub?size*0.72:size); g.fillText(t,bx,sub?y+size*0.28:y); bx+=widths[i]; });
+  g.restore();
 }
 function line(g,pts,color,w=1.5,dash){
   g.save(); g.strokeStyle=color; g.lineWidth=w; if(dash) g.setLineDash(dash);
@@ -88,15 +95,15 @@ function buildControls(sim){
     const id='p-'+sim.id+'-'+p.id;
     if(p.type==='check'){
       const l=document.createElement('label'); l.className='chk';
-      l.innerHTML=`<input type="checkbox" id="${id}" ${p.value?'checked':''}> ${p.label}`;
+      l.innerHTML=`<input type="checkbox" id="${id}" ${p.value?'checked':''}> <span>${M(p.label)}</span>`;
       l.querySelector('input').onchange=e=>{S.P[p.id]=e.target.checked; changed(p.id)}; box.appendChild(l); return;
     }
     const d=document.createElement('div'); d.className='ctl';
     if(p.type==='select'){
-      d.innerHTML=`<div class="lab"><label for="${id}">${p.label}</label></div><select id="${id}">${p.options.map(([v,l])=>`<option value="${v}" ${v==p.value?'selected':''}>${l}</option>`).join('')}</select>`;
+      d.innerHTML=`<div class="lab"><label for="${id}">${M(p.label)}</label></div><select id="${id}">${p.options.map(([v,l])=>`<option value="${v}" ${v==p.value?'selected':''}>${l}</option>`).join('')}</select>`;
       d.querySelector('select').onchange=e=>{S.P[p.id]=e.target.value; changed(p.id)};
     } else {
-      d.innerHTML=`<div class="lab"><label for="${id}">${p.label}</label><output>${show(p,p.value)}</output></div><input type="range" id="${id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">`;
+      d.innerHTML=`<div class="lab"><label for="${id}">${M(p.label)}</label><output>${show(p,p.value)}</output></div><input type="range" id="${id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">`;
       const out=d.querySelector('output');
       d.querySelector('input').oninput=e=>{const v=parseFloat(e.target.value); S.P[p.id]=v; out.textContent=show(p,v); changed(p.id)};
     }
@@ -109,9 +116,11 @@ function buildControls(sim){
 function show(p,v){ const d=p.digits??Math.max(0,-Math.floor(Math.log10(p.step||1))); return (+v).toFixed(d)+(p.unit?' '+p.unit:''); }
 function changed(id){ if(cur.onParam) cur.onParam(S,id); updateReadout(); }
 function setParam(id,v){ S.P[id]=v; const el=document.getElementById('p-'+cur.id+'-'+id); if(el){ if(el.type==='checkbox') el.checked=v; else el.value=v; el.dispatchEvent(new Event('input')); } }
+let roKey='';
 function updateReadout(){
-  const rows=cur.readout?cur.readout(S):[];
-  document.getElementById('ro').innerHTML=rows.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join('');
+  const rows=cur.readout?cur.readout(S):[], tb=document.getElementById('ro'), key=cur.id+'|'+rows.map(r=>r[0]).join('|');
+  if(key!==roKey){ roKey=key; tb.innerHTML=rows.map(([a,b])=>`<tr><td>${M(a)}</td><td></td></tr>`).join(''); }
+  rows.forEach(([a,b],i)=>{ const c=tb.rows[i]&&tb.rows[i].cells[1]; if(c&&c.textContent!==b) c.textContent=b; });
 }
 function select(id,force){
   const sim=SIMS.find(s=>s.id===id)||SIMS[0];
@@ -121,9 +130,9 @@ function select(id,force){
   const L=LEVELS[sim.level];
   const lv=document.getElementById('lvl'); lv.textContent=L.label; lv.style.background=`var(${L.color})`;
   document.getElementById('simname').textContent=sim.name;
-  document.getElementById('formula').textContent=sim.formula;
-  document.getElementById('explain').textContent=sim.explain;
-  document.getElementById('hint').textContent='やってみよう：'+(sim.hint||'');
+  document.getElementById('formula').innerHTML=M(sim.formula);
+  document.getElementById('explain').innerHTML=M(sim.explain);
+  document.getElementById('hint').innerHTML='<b>やってみよう：</b>'+M(sim.hint||'');
   document.getElementById('hint').hidden=!sim.hint;
   const rel=document.getElementById('related');
   rel.innerHTML=sim.related&&sim.related.length?('関連する問題：'+sim.related.map(r=>PROBLEMS_URL.startsWith('http')?`<a href="${PROBLEMS_URL}#${sim.level}" target="_blank" rel="noopener">${r}</a>`:r).join('、')):'';

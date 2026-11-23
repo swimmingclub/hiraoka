@@ -21,7 +21,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:1
 .wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
 header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.2;margin:0 0 6px;text-wrap:balance}
 header p{margin:0;color:var(--muted);max-width:62ch}
-.const{margin-top:12px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted);background:var(--code);border-radius:6px;padding:8px 12px;display:inline-block}
+.const{margin-top:12px;font-size:13px;color:var(--muted);background:var(--code);border-radius:6px;padding:8px 12px;display:inline-block}
 nav.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 8px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:10px;z-index:5}
 nav.tabs button{font:inherit;font-family:var(--f-display);font-weight:700;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer;display:flex;gap:8px;align-items:center}
 nav.tabs button .dot{width:9px;height:9px;border-radius:50%}
@@ -29,10 +29,12 @@ nav.tabs button[aria-selected="true"]{border-color:var(--ink);background:var(--i
 nav.tabs button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lv-desc{color:var(--muted);margin:4px 0 20px}
 h2{font-family:var(--f-display);font-size:13px;letter-spacing:.12em;color:var(--muted);margin:28px 0 12px;font-weight:700}
-.thms{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.thms{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:12px}
 .thm{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:6px}
 .thm h3{margin:0;font-family:var(--f-display);font-size:16px;font-weight:700}
-.formula{font-family:var(--f-mono);font-size:13.5px;background:var(--code);padding:6px 10px;border-radius:6px;overflow-wrap:anywhere}
+.formula{font-size:15px;background:var(--code);padding:4px 12px;border-radius:6px;min-width:0;max-width:100%;box-sizing:border-box}
+.const .mjx-i svg{vertical-align:middle}
+/*__MATHCSS__*/
 .thm p{margin:0;font-size:13.5px;color:var(--muted)}
 .probs{display:flex;flex-direction:column;gap:16px}
 .prob{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-width:0}
@@ -72,12 +74,14 @@ label.done{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:ce
 </div>
 <script>
 const DATA = __DATA__;
+const MATH = __MATH__;
+/*__MJS__*/
 const SIM_URL = "__SIM_URL__";
 const LV = {beginner:{label:"初級",color:"var(--b)"},intermediate:{label:"中級",color:"var(--m)"},advanced:{label:"上級",color:"var(--a)"}};
 let done = {};
 try{done = JSON.parse(localStorage.getItem("fluid-done")||"{}")}catch(e){}
 const esc = s => s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-document.getElementById("const").textContent = DATA.meta.constants;
+document.getElementById("const").innerHTML = M(DATA.meta.constants);
 const tabs = document.getElementById("tabs");
 function render(level){
   [...tabs.children].forEach(b=>b.setAttribute("aria-selected", b.dataset.lv===level));
@@ -85,21 +89,21 @@ function render(level){
   const thName = {};
   DATA.theorems.forEach(t=>thName[t.id]=t.name);
   document.getElementById("thms").innerHTML = DATA.theorems.filter(t=>t.level===level).map(t=>`
-    <article class="thm"><h3>${esc(t.name)}</h3><div class="formula">${esc(t.formula)}</div><p>${esc(t.idea)}</p></article>`).join("");
+    <article class="thm"><h3>${esc(t.name)}</h3><div class="formula">${M("$$"+t.formula+"$$")}</div><p>${M(t.idea)}</p></article>`).join("");
   const ps = DATA.problems.filter(p=>p.level===level);
   document.getElementById("probs").innerHTML = ps.map(p=>{
     const href = SIM_URL ? `${SIM_URL}#${p.sim}` : "";
     return `<article class="prob" id="${p.id}">
       <div class="head"><span class="pid" style="background:${LV[level].color}">${p.id}</span><h3>${esc(p.title)}</h3></div>
-      <p class="q">${esc(p.question)}</p>
+      <p class="q">${M(p.question)}</p>
       <div class="row">
         <a class="simlink" ${href?`href="${href}" target="_blank" rel="noopener"`:'aria-disabled="true"'}>シミュレータ：${esc(thName[p.sim]||p.sim)}${href?" ↗":"（準備中）"}</a>
         <label class="done"><input type="checkbox" id="chk-${p.id}" data-id="${p.id}" ${done[p.id]?"checked":""}> 解けた</label>
       </div>
       <details><summary>解説と答えを見る</summary>
-        <ol class="steps">${p.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
-        <div class="ans">答え：${esc(p.answer)}</div>
-        <p class="point"><b>ポイント：</b>${esc(p.point)}</p>
+        <ol class="steps">${p.steps.map(s=>`<li>${M(s)}</li>`).join("")}</ol>
+        <div class="ans">答え：${M(p.answer)}</div>
+        <p class="point"><b>ポイント：</b>${M(p.point)}</p>
       </details></article>`}).join("");
   updateProgress(ps);
   try{localStorage.setItem("fluid-level",level)}catch(e){}

@@ -1,14 +1,14 @@
 // 初級：連続の式
 defineSim({
   id:'continuity', level:'beginner', order:4, name:'連続の式（質量保存）',
-  formula:'Q = A₁v₁ = A₂v₂　　v₂ = v₁ (d₁/d₂)²',
+  formula:'$$Q = A_1 v_1 = A_2 v_2 \\qquad v_2 = v_1 \\left(\\frac{d_1}{d_2}\\right)^2$$',
   explain:'水は縮まないので、管のどの断面でも 1 秒あたりに通る体積（流量 Q）は同じです。断面積が小さいところでは、同じ量を通すために流れが速くなります。粒の流れる速さと、同じ時刻に入った色つきの「水のかたまり」の長さに注目しましょう。',
   hint:'細い管の直径を半分にすると、流速は何倍になるでしょう？（答え：4 倍）。色つきのかたまりは、細い部分で細長く伸びます。体積は変わりません。',
   related:['B4'],
   params:[
-    {id:'v1',label:'太い管の流速 v₁',min:0.2,max:4,step:0.1,value:2,unit:'m/s'},
-    {id:'d1',label:'太い管の内径 d₁',min:4,max:20,step:0.5,value:10,unit:'cm'},
-    {id:'d2',label:'細い管の内径 d₂',min:2,max:20,step:0.5,value:5,unit:'cm'},
+    {id:'v1',label:'太い管の流速 $v_1$',min:0.2,max:4,step:0.1,value:2,unit:'m/s'},
+    {id:'d1',label:'太い管の内径 $d_1$',min:4,max:20,step:0.5,value:10,unit:'cm'},
+    {id:'d2',label:'細い管の内径 $d_2$',min:2,max:20,step:0.5,value:5,unit:'cm'},
   ],
   init(S){ S.parts=[]; for(let i=0;i<260;i++) S.parts.push({x:60+Math.random()*840,e:Math.random()*2-1}); S.slug=0; },
   R(S,x){ const sc=12, r1=S.P.d1*sc/2, r2=S.P.d2*sc/2; // 1 cm = 12 px
@@ -44,6 +44,6 @@ defineSim({
     text(g,'赤いかたまり＝同じ体積の水',480,560,{align:'center',size:13,color:C.hi});
   },
   readout(S){ const A1=Math.PI/4*(S.P.d1/100)**2, A2=Math.PI/4*(S.P.d2/100)**2, Q=A1*S.P.v1, v2=Q/A2;
-    return [['断面積 A₁',fmt(A1*1e4)+' cm²'],['断面積 A₂',fmt(A2*1e4)+' cm²'],['流量 Q = A₁v₁',fmt(Q*1000)+' L/s'],
-      ['細い管の流速 v₂ = Q/A₂',fmt(v2)+' m/s'],['速度比 v₂/v₁ = (d₁/d₂)²',fmt(v2/S.P.v1)]]; }
+    return [['断面積 $A_1$',fmt(A1*1e4)+' cm²'],['断面積 $A_2$',fmt(A2*1e4)+' cm²'],['流量 $Q = A_1 v_1$',fmt(Q*1000)+' L/s'],
+      ['細い管の流速 $v_2 = Q/A_2$',fmt(v2)+' m/s'],['速度比 $v_2/v_1 = (d_1/d_2)^2$',fmt(v2/S.P.v1)]]; }
 });

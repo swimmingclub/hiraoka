@@ -1,14 +1,14 @@
 // 上級：速度ポテンシャル・流れ関数と重ね合わせ
 defineSim({
   id:'potential', level:'advanced', order:3, name:'流れ関数の重ね合わせ（湧き出し・吸い込み・渦）',
-  formula:'ψ = Uy + Σ (m/2π)θ − Σ (Γ/2π) ln r　　u = ∂ψ/∂y,  v = −∂ψ/∂x',
-  explain:'非回転・非圧縮の流れはラプラス方程式を満たすので、基本の流れ（一様流・湧き出し・吸い込み・渦）を足し合わせても正しい流れになります。流線（ψ = 一定の線）は流体が横切れないので、閉じた流線をそのまま物体の表面とみなせます。一様流に湧き出しを置くと「ランキンの半無限物体」、湧き出しと吸い込みを並べると「ランキンの楕円体」になります。',
+  formula:'$$\\psi = Uy + \\sum \\frac{m}{2\\pi}\\theta - \\sum \\frac{\\Gamma}{2\\pi}\\ln r \\qquad u = \\frac{\\partial\\psi}{\\partial y},\\quad v = -\\frac{\\partial\\psi}{\\partial x}$$',
+  explain:'非回転・非圧縮の流れはラプラス方程式を満たすので、基本の流れ（一様流・湧き出し・吸い込み・渦）を足し合わせても正しい流れになります。流線（$\\psi$ = 一定の線）は流体が横切れないので、閉じた流線をそのまま物体の表面とみなせます。一様流に湧き出しを置くと「ランキンの半無限物体」、湧き出しと吸い込みを並べると「ランキンの楕円体」になります。',
   hint:'キャンバスをクリックすると、選んだ要素が置かれます。置いた要素はドラッグで動かせます。「A3 の条件」で問題の流れになります。赤い線が物体の表面にあたる流線で、白丸がよどみ点です。',
   related:['A3'],
   params:[
-    {id:'U',label:'一様流 U',min:0,max:10,step:0.5,value:5,unit:'m/s'},
+    {id:'U',label:'一様流 $U$',min:0,max:10,step:0.5,value:5,unit:'m/s'},
     {id:'type',label:'クリックで置く要素',type:'select',value:'src',options:[['src','湧き出し (m > 0)'],['snk','吸い込み (m < 0)'],['vcw','渦（時計回り）'],['vccw','渦（反時計回り）']]},
-    {id:'k',label:'置く要素の強さ |m| または |Γ|',min:1,max:40,step:1,value:10,unit:'m²/s'},
+    {id:'k',label:'置く要素の強さ $|m|$ または $|\\Gamma|$',min:1,max:40,step:1,value:10,unit:'m²/s'},
     {id:'heat',label:'圧力の色地図を表示',type:'check',value:false},
   ],
   buttons:[
@@ -69,6 +69,6 @@ defineSim({
     const st=(S.st||[]).slice(0,3).map(p=>'('+fmt(p[0])+', '+fmt(p[1])+')').join(' ');
     rows.push(['よどみ点 [m]',st||'なし']);
     const one=S.els.length===1&&S.els[0].t==='src'&&S.P.U>0;
-    if(one){ const m=S.els[0].k; rows.push(['理論 x_s = −m/(2πU)',fmt(-m/(2*Math.PI*S.P.U))+' m'],['下流での物体の幅 m/U',fmt(m/S.P.U)+' m'],['物体表面の流線 ψ',fmt(m/2)+' m²/s']); }
+    if(one){ const m=S.els[0].k; rows.push(['理論 $x_s = -m/(2\\pi U)$',fmt(-m/(2*Math.PI*S.P.U))+' m'],['下流での物体の幅 $m/U$',fmt(m/S.P.U)+' m'],['物体表面の流線 $\\psi$',fmt(m/2)+' m²/s']); }
     return rows; }
 });

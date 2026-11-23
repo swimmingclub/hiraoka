@@ -1,13 +1,13 @@
 // 上級：ナビエ・ストークス方程式の数値解（格子ボルツマン法 D2Q9 による円柱まわりの流れ）
 defineSim({
   id:'navierstokes', level:'advanced', order:5, name:'ナビエ・ストークス方程式（カルマン渦）',
-  formula:'ρ(∂u/∂t + (u·∇)u) = −∇p + μ∇²u　　Re = UD/ν',
+  formula:'$$\\rho\\left(\\frac{\\partial \\boldsymbol{u}}{\\partial t} + (\\boldsymbol{u}\\cdot\\nabla)\\boldsymbol{u}\\right) = -\\nabla p + \\mu\\nabla^2\\boldsymbol{u} \\qquad Re = \\frac{UD}{\\nu}$$',
   explain:'粘性流体の運動方程式（ナビエ・ストークス方程式）を数値計算で解き、円柱まわりの流れを表示しています。左辺の慣性項（流れが速度を運ぶ効果）と右辺の粘性項の比がレイノルズ数です。Re が小さいと流れは円柱に沿って対称に流れますが、Re を上げると後ろに 1 対の渦ができ、さらに上げると渦が交互に放出されるカルマン渦列になります。ポテンシャル流（粘性なし）では現れない現象です。',
   hint:'Re を 20 → 60 → 150 と変えて流れの変化を見ましょう。色は渦度（流れの回転）で、赤が反時計回り、青が時計回りです。キャンバスをドラッグすると壁を描けます（右クリック相当の消去はボタンで）。計算は格子ボルツマン法という手法で、ナビエ・ストークス方程式と同じ流れを再現します。',
   related:['A5'],
   liveReadout:true,
   params:[
-    {id:'Re',label:'レイノルズ数 Re',min:5,max:200,step:1,value:120},
+    {id:'Re',label:'レイノルズ数 $Re$',min:5,max:200,step:1,value:120},
     {id:'show',label:'表示',type:'select',value:'curl',options:[['curl','渦度（回転）'],['speed','速さ'],['ux','x 方向の速度（逆流が青）']]},
     {id:'speed',label:'計算の速さ（1 フレームの計算ステップ）',min:2,max:30,step:1,value:14},
   ],
@@ -90,8 +90,8 @@ defineSim({
     const amp=Math.max(...p.slice(-800).map(Math.abs)); if(cr.length<3||amp<this.u0*0.02) return null;
     const T=(cr[cr.length-1]-cr[1])/(cr.length-2); return this.D/(T*this.u0); },
   readout(S){ const nu=this.u0*this.D/S.P.Re, st=this.strouhal(S); return [
-    ['レイノルズ数 Re = UD/ν',String(S.P.Re)],['格子の動粘性係数 ν',fmt(nu)],['緩和時間 τ = 3ν + ½',fmt(3*nu+0.5)],
-    ['ストローハル数 St',st?fmt(st,2):'—'],['計算ステップ数',String(S.steps)]]; }
+    ['レイノルズ数 $Re = UD/\\nu$',String(S.P.Re)],['格子の動粘性係数 $\\nu$',fmt(nu)],['緩和時間 $\\tau = 3\\nu + \\frac{1}{2}$',fmt(3*nu+0.5)],
+    ['ストローハル数 $St$',st?fmt(st,2):'—'],['計算ステップ数',String(S.steps)]]; }
 });
 function NX_half(o){ return Math.floor(o.NX/2)+Math.floor(o.NY/2)*o.NX; }
 const HEAT_LUT=Array.from({length:256},(_,i)=>heat(i/255).match(/\d+/g).map(Number));

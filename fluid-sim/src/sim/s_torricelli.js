@@ -1,15 +1,15 @@
 // 初級：トリチェリの定理
 defineSim({
   id:'torricelli', level:'beginner', order:5, name:'トリチェリの定理（小孔からの流出）',
-  formula:'v = √(2gh)　　x = v√(2H/g) = 2√(hH)',
+  formula:'$$v = \\sqrt{2gh} \\qquad x = v\\sqrt{\\frac{2H}{g}} = 2\\sqrt{hH}$$',
   explain:'水面から深さ h の小孔から出る水の速さは、高さ h から物が自由落下したときの速さと同じです。水面と孔にベルヌーイの定理を当てはめると導けます。孔から出た水は水平投射なので、床までの到達距離も計算できます。',
   hint:'水位を一定にして孔の高さを動かすと、到達距離が最大になるのはどこでしょう？（答え：孔が水面と床のちょうど中間にあるとき）。「水位が下がる」をオンにすると、流出がだんだん弱まる様子が見られます。',
   related:['B5'],
   liveReadout:true,
   params:[
-    {id:'L',label:'床からの水位 L',min:0.5,max:3,step:0.05,value:2.6,unit:'m'},
-    {id:'H',label:'孔の高さ H（床から）',min:0,max:3,step:0.05,value:0.8,unit:'m'},
-    {id:'d',label:'孔の直径 d',min:0.5,max:5,step:0.1,value:2,unit:'cm'},
+    {id:'L',label:'床からの水位 $L$',min:0.5,max:3,step:0.05,value:2.6,unit:'m'},
+    {id:'H',label:'孔の高さ $H$（床から）',min:0,max:3,step:0.05,value:0.8,unit:'m'},
+    {id:'d',label:'孔の直径 $d$',min:0.5,max:5,step:0.1,value:2,unit:'cm'},
     {id:'drain',label:'水位が下がる（タンク直径 0.5 m）',type:'check',value:false},
   ],
   K:150, floor:560, xt:260,
@@ -56,6 +56,6 @@ defineSim({
   },
   readout(S){ const h=this.h(S), v=Math.sqrt(2*9.81*h), a=Math.PI/4*(S.P.d/100)**2, X=2*Math.sqrt(h*S.P.H);
     const Hbest=S.level/2, Xbest=S.level;
-    return [['深さ h',fmt(h)+' m'],['流出速度 v = √(2gh)',fmt(v)+' m/s'],['流量 Q = av',fmt(a*v*1000)+' L/s'],
-      ['到達距離 x = 2√(hH)',fmt(X)+' m'],['最大になる孔の高さ',fmt(Hbest)+' m（x = '+fmt(Xbest)+' m）']]; }
+    return [['深さ $h$',fmt(h)+' m'],['流出速度 $v = \\sqrt{2gh}$',fmt(v)+' m/s'],['流量 $Q = av$',fmt(a*v*1000)+' L/s'],
+      ['到達距離 $x = 2\\sqrt{hH}$',fmt(X)+' m'],['最大になる孔の高さ',fmt(Hbest)+' m（x = '+fmt(Xbest)+' m）']]; }
 });

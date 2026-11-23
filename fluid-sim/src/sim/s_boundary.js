@@ -8,14 +8,14 @@ const BLASIUS=(()=>{ const h=0.01, N=1000, fp=[0]; let f=0, f1=0, f2=0.33206;
   return eta=> eta>=10?1:(eta<=0?0:fp[Math.floor(eta/h)]); })();
 defineSim({
   id:'boundary', level:'advanced', order:4, name:'境界層（ブラジウスの解）',
-  formula:'δ ≈ 5.0x/√Re_x　　τ_w = 0.332ρU²/√Re_x　　C_f(平均) = 1.328/√Re_L　　Re_x = Ux/ν',
-  explain:'粘性のある流体が平板に沿って流れると、板の表面では速度が 0 になり、その影響は表面近くの薄い層（境界層）に限られます。層流境界層の厚さ δ は √x に比例し、下流ほど厚くなります。Re_x が約 5×10⁵ を超えると乱流境界層に遷移し、急に厚くなります。',
-  hint:'縦方向は大きく拡大して描いています。流速を上げると境界層は薄くなります（δ ∝ 1/√U）。速度分布の形は場所によらず相似（η = y√(U/νx) で重なる）なのがブラジウス解の特徴です。',
+  formula:'$$\\delta \\approx \\frac{5.0\\,x}{\\sqrt{Re_x}} \\qquad \\tau_w = \\frac{0.332\\,\\rho U^2}{\\sqrt{Re_x}} \\qquad \\overline{C_f} = \\frac{1.328}{\\sqrt{Re_L}} \\qquad Re_x = \\frac{Ux}{\\nu}$$',
+  explain:'粘性のある流体が平板に沿って流れると、板の表面では速度が 0 になり、その影響は表面近くの薄い層（境界層）に限られます。層流境界層の厚さ $\\delta$ は $\\sqrt{x}$ に比例し、下流ほど厚くなります。$Re_x$ が約 $5 \\times 10^5$ を超えると乱流境界層に遷移し、急に厚くなります。',
+  hint:'縦方向は大きく拡大して描いています。流速を上げると境界層は薄くなります（$\\delta \\propto 1/\\sqrt{U}$）。速度分布の形は場所によらず相似（$\\eta = y\\sqrt{U/\\nu x}$ で重なる）なのがブラジウス解の特徴です。',
   related:['A4'],
   params:[
-    {id:'U',label:'一様流の速さ U',min:0.5,max:30,step:0.5,value:5,unit:'m/s'},
-    {id:'L',label:'板の長さ L',min:0.1,max:3,step:0.05,value:1,unit:'m'},
-    {id:'b',label:'板の幅 b',min:0.1,max:2,step:0.1,value:0.5,unit:'m'},
+    {id:'U',label:'一様流の速さ $U$',min:0.5,max:30,step:0.5,value:5,unit:'m/s'},
+    {id:'L',label:'板の長さ $L$',min:0.1,max:3,step:0.05,value:1,unit:'m'},
+    {id:'b',label:'板の幅 $b$',min:0.1,max:2,step:0.1,value:0.5,unit:'m'},
     {id:'fl',label:'流体',type:'select',value:'1.5e-5,1.2',options:[['1.5e-5,1.2','空気 (ν = 1.5×10⁻⁵, ρ = 1.2)'],['1e-6,1000','水 (ν = 1.0×10⁻⁶, ρ = 1000)']]},
   ],
   calc(S){ const [nu,rho]=S.P.fl.split(',').map(Number), U=S.P.U, L=S.P.L, ReL=U*L/nu, xt=5e5*nu/U;
@@ -51,6 +51,6 @@ defineSim({
     text(g,'x = 0（前縁）',G.x0,G.yb+52,{size:12,color:C.muted}); text(g,'x = L = '+fmt(r.L)+' m',G.x1,G.yb+52,{align:'right',size:12,color:C.muted});
   },
   readout(S){ const r=this.calc(S); return [
-    ['後端のレイノルズ数 Re_L',fmt(r.ReL)],['状態',r.ReL<5e5?'全長で層流':'途中で乱流に遷移'],['後端の厚さ δ(L)',fmt(r.dL*1000)+' mm'],
-    ['平均摩擦係数 C_f',fmt(r.Cf)],['片面の摩擦抵抗 D = ½ρU²C_f Lb',fmt(r.D)+' N']]; }
+    ['後端のレイノルズ数 $Re_L$',fmt(r.ReL)],['状態',r.ReL<5e5?'全長で層流':'途中で乱流に遷移'],['後端の厚さ $\\delta(L)$',fmt(r.dL*1000)+' mm'],
+    ['平均摩擦係数 $\\overline{C_f}$',fmt(r.Cf)],['片面の摩擦抵抗 $D = \\frac{1}{2}\\rho U^2 \\overline{C_f}\\, Lb$',fmt(r.D)+' N']]; }
 });

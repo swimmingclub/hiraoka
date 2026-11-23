@@ -4,15 +4,15 @@ const Cx={ add:(a,b)=>[a[0]+b[0],a[1]+b[1]], sub:(a,b)=>[a[0]-b[0],a[1]-b[1]], m
   exp:t=>[Math.cos(t),Math.sin(t)], sqrt:a=>{const r=Math.sqrt(Cx.abs(a)), t=Math.atan2(a[1],a[0])/2; return [r*Math.cos(t),r*Math.sin(t)];} };
 defineSim({
   id:'kutta', level:'advanced', order:2, name:'クッタ・ジューコフスキーの定理（翼の揚力）',
-  formula:'L′ = ρUΓ　　クッタ条件：Γ = 4πRU sin(α + β)　　C_L ≈ 2π sin(α + β)',
-  explain:'円柱まわりの流れを写像 z = ζ + c²/ζ（ジューコフスキー変換）で変形すると翼型まわりの流れが得られます。循環 Γ の大きさは「流れが鋭い後縁からなめらかに離れる」という条件（クッタ条件）で 1 つに決まり、揚力は L′ = ρUΓ です。迎え角 α を大きくするほど、またキャンバー（反り）をつけるほど揚力が増えます。',
+  formula:'$$L^{\\prime} = \\rho U \\Gamma \\qquad \\text{クッタ条件：}\\ \\Gamma = 4\\pi R U \\sin(\\alpha + \\beta) \\qquad C_L \\approx 2\\pi \\sin(\\alpha + \\beta)$$',
+  explain:'円柱まわりの流れを写像 $z = \\zeta + \\dfrac{c^2}{\\zeta}$（ジューコフスキー変換）で変形すると翼型まわりの流れが得られます。循環 Γ の大きさは「流れが鋭い後縁からなめらかに離れる」という条件（クッタ条件）で 1 つに決まり、揚力は $L^{\\prime} = \\rho U \\Gamma$ です。迎え角 α を大きくするほど、またキャンバー（反り）をつけるほど揚力が増えます。',
   hint:'「クッタ条件」をオフにして Γ = 0 にすると、流れが後縁を回り込む不自然な流れになり、揚力は 0 です。オンに戻すと後縁から流れがなめらかに離れ、揚力が生まれます。反りのある翼は迎え角 0° でも揚力が出ます。',
   related:['A2'],
   params:[
-    {id:'al',label:'迎え角 α',min:-10,max:15,step:0.5,value:5,unit:'°'},
-    {id:'dl',label:'反り（キャンバー）δ',min:0,max:0.15,step:0.01,value:0.06,digits:2},
-    {id:'ep',label:'厚み ε',min:0.02,max:0.2,step:0.01,value:0.1,digits:2},
-    {id:'U',label:'流速 U',min:10,max:80,step:1,value:40,unit:'m/s'},
+    {id:'al',label:'迎え角 $\\alpha$',min:-10,max:15,step:0.5,value:5,unit:'°'},
+    {id:'dl',label:'反り（キャンバー）$\\delta$',min:0,max:0.15,step:0.01,value:0.06,digits:2},
+    {id:'ep',label:'厚み $\\varepsilon$',min:0.02,max:0.2,step:0.01,value:0.1,digits:2},
+    {id:'U',label:'流速 $U$',min:10,max:80,step:1,value:40,unit:'m/s'},
     {id:'kc',label:'クッタ条件を満たす循環にする',type:'check',value:true},
     {id:'Gm',label:'手動の循環（クッタ条件オフのとき）',min:-2,max:4,step:0.05,value:0,digits:2},
   ],
@@ -58,6 +58,6 @@ defineSim({
     FT.legend(g,S,20,555);
   },
   readout(S){ const q=this.geom(S), Lu=1/q.chord, Gr=q.G*S.P.U*Lu, CL=2*q.G/q.chord;
-    return [['翼弦長 c（1 m として換算）','1 m'],['ゼロ揚力角 −β',fmt(-q.beta*180/Math.PI)+'°'],['循環 Γ',fmt(Gr)+' m²/s'],
-      ['揚力係数 C_L',fmt(CL)],['揚力 L′ = ρUΓ（空気）',fmt(1.2*S.P.U*Gr)+' N/m'],['薄翼理論 2π(α+β)',fmt(2*Math.PI*(q.al+q.beta))]]; }
+    return [['翼弦長 $c$（1 m として換算）','1 m'],['ゼロ揚力角 $-\\beta$',fmt(-q.beta*180/Math.PI)+'°'],['循環 $\\Gamma$',fmt(Gr)+' m²/s'],
+      ['揚力係数 $C_L$',fmt(CL)],['揚力 $L^{\\prime} = \\rho U \\Gamma$（空気）',fmt(1.2*S.P.U*Gr)+' N/m'],['薄翼理論 $2\\pi(\\alpha + \\beta)$',fmt(2*Math.PI*(q.al+q.beta))]]; }
 });

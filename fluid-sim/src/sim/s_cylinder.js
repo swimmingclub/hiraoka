@@ -1,14 +1,14 @@
 // 上級：円柱まわりのポテンシャル流（循環つき）、ダランベールのパラドックスとマグヌス効果
 defineSim({
   id:'cylinder', level:'advanced', order:1, name:'円柱まわりの流れと循環（ダランベール・マグヌス）',
-  formula:'W(z) = U(z + a²/z) + iΓ/(2π)·log z　　u_θ = −2U sinθ − Γ/(2πa)　　C_p = 1 − (u_θ/U)²',
-  explain:'一様流（速さ U）の中に半径 a の円柱を置いたポテンシャル流です。循環 Γ = 0 では圧力分布が前後・上下とも対称なので、抗力も揚力も 0 です（ダランベールのパラドックス）。円柱を回転させて時計回りの循環 Γ を与えると、上側が速く（圧力が低く）なり、揚力 L′ = ρUΓ が生じます（クッタ・ジューコフスキーの定理、マグヌス効果）。',
-  hint:'Γ を 0 から少しずつ増やすと、よどみ点（白丸）が下へ移動します。Γ = 4πaU を超えると、よどみ点は円柱から離れて流れの中に浮かびます。右下の C_p グラフが前後対称なら抗力 0 です。',
+  formula:'$$W(z) = U\\left(z + \\frac{a^2}{z}\\right) + \\frac{i\\Gamma}{2\\pi}\\log z \\qquad u_\\theta = -2U\\sin\\theta - \\frac{\\Gamma}{2\\pi a} \\qquad C_p = 1 - \\left(\\frac{u_\\theta}{U}\\right)^2$$',
+  explain:'一様流（速さ U）の中に半径 a の円柱を置いたポテンシャル流です。循環 Γ = 0 では圧力分布が前後・上下とも対称なので、抗力も揚力も 0 です（ダランベールのパラドックス）。円柱を回転させて時計回りの循環 Γ を与えると、上側が速く（圧力が低く）なり、揚力 $L^{\\prime} = \\rho U \\Gamma$ が生じます（クッタ・ジューコフスキーの定理、マグヌス効果）。',
+  hint:'Γ を 0 から少しずつ増やすと、よどみ点（白丸）が下へ移動します。$\\Gamma = 4\\pi a U$ を超えると、よどみ点は円柱から離れて流れの中に浮かびます。右下の C_p グラフが前後対称なら抗力 0 です。',
   related:['A1','A2'],
   params:[
-    {id:'U',label:'一様流の速さ U',min:1,max:30,step:0.5,value:10,unit:'m/s'},
-    {id:'a',label:'円柱の半径 a',min:0.1,max:1,step:0.05,value:0.5,unit:'m'},
-    {id:'G',label:'循環 Γ（時計回り正）',min:-100,max:100,step:1,value:0,unit:'m²/s'},
+    {id:'U',label:'一様流の速さ $U$',min:1,max:30,step:0.5,value:10,unit:'m/s'},
+    {id:'a',label:'円柱の半径 $a$',min:0.1,max:1,step:0.05,value:0.5,unit:'m'},
+    {id:'G',label:'循環 $\\Gamma$（時計回り正）',min:-100,max:100,step:1,value:0,unit:'m²/s'},
     {id:'lines',label:'流線を表示',type:'check',value:true},
     {id:'heat',label:'圧力の色地図を表示',type:'check',value:true},
   ],
@@ -62,6 +62,6 @@ defineSim({
   readout(S){ const U=S.P.U,a=S.P.a,G=S.P.G, k=G/(4*Math.PI*a*U);
     const st=Math.abs(k)<=1?fmt(Math.asin(-k)*180/Math.PI)+'°, '+fmt(180-Math.asin(-k)*180/Math.PI)+'°':'円柱から離れる';
     return [['表面の最大流速',fmt(Math.max(Math.abs(2*U+G/(2*Math.PI*a)),Math.abs(-2*U+G/(2*Math.PI*a))))+' m/s'],
-      ['Γ=0 での θ=90° の p − p∞',fmt(0.5*1.2*U*U*(-3))+' Pa'],['よどみ点 θ_s',st],['Γ/(4πaU)',fmt(k)],
-      ['揚力 L′ = ρUΓ（空気 ρ = 1.2）',fmt(1.2*U*G)+' N/m'],['抗力（ポテンシャル流）','0 N/m']]; }
+      ['$\\Gamma = 0$ での $\\theta = 90^\\circ$ の $p - p_\\infty$',fmt(0.5*1.2*U*U*(-3))+' Pa'],['よどみ点 $\\theta_s$',st],['$\\Gamma/(4\\pi a U)$',fmt(k)],
+      ['揚力 $L^{\\prime} = \\rho U \\Gamma$（空気 $\\rho = 1.2$）',fmt(1.2*U*G)+' N/m'],['抗力（ポテンシャル流）','0 N/m']]; }
 });

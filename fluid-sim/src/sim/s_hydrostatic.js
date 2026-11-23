@@ -1,13 +1,13 @@
 // 初級：静水圧と平面壁の全圧力
 defineSim({
   id:'hydrostatic', level:'beginner', order:1, name:'静水圧と水門の全圧力',
-  formula:'p = ρgh　　F = ρg h_G A　　h_P = h_G + I_G/(h_G A)',
-  explain:'静止した水の圧力は深さに比例して大きくなり、壁を垂直に押します。圧力は三角形に分布するので、合力（全圧力）は図心より深い位置（長方形なら水深の 2/3）に作用します。',
+  formula:'$$p = \\rho g h \\qquad F = \\rho g\\, h_G A \\qquad h_P = h_G + \\frac{I_G}{h_G A}$$',
+  explain:'静止した水の圧力は深さに比例して大きくなり、壁を垂直に押します。圧力は三角形に分布するので、合力（全圧力）は図心より深い位置（長方形なら水深の $\\frac{2}{3}$）に作用します。',
   hint:'水深を 2 倍にすると、全圧力は何倍になるでしょう？（答え：4 倍。圧力も面積も 2 倍になるから）。水の中をクリックすると、その深さの圧力が表示されます。',
   related:['B1'],
   params:[
-    {id:'h',label:'水深 h',min:0.5,max:10,step:0.1,value:5,unit:'m'},
-    {id:'b',label:'水門の幅 b',min:0.5,max:5,step:0.1,value:2,unit:'m'},
+    {id:'h',label:'水深 $h$',min:0.5,max:10,step:0.1,value:5,unit:'m'},
+    {id:'b',label:'水門の幅 $b$',min:0.5,max:5,step:0.1,value:2,unit:'m'},
     {id:'rho',label:'液体',type:'select',value:'1000',options:[['1000','水 (1000 kg/m³)'],['1025','海水 (1025 kg/m³)'],['850','油 (850 kg/m³)'],['13600','水銀 (13600 kg/m³)']]},
   ],
   init(S){ S.probe=null; },
@@ -55,11 +55,11 @@ defineSim({
       text(g,`深さ ${fmt(S.probe)} m：p = ${fmt(r.rho*9.81*S.probe/1000)} kPa`,x+12,y,{size:13,weight:700,bg:C.paper}); }
   },
   readout(S){ const r=this.calc(S); return [
-    ['底のゲージ圧 p = ρgh', fmt(r.pmax/1000)+' kPa'],
-    ['水門の面積 A = bh', fmt(r.A)+' m²'],
-    ['図心の深さ h_G', fmt(r.hG)+' m'],
-    ['全圧力 F = ρg h_G A', fmt(r.F/1000)+' kN'],
-    ['圧力中心 h_P', fmt(r.hP)+' m'],
-    ['h_P / h', fmt(r.hP/r.h)],
+    ['底のゲージ圧 $p = \\rho g h$', fmt(r.pmax/1000)+' kPa'],
+    ['水門の面積 $A = bh$', fmt(r.A)+' m²'],
+    ['図心の深さ $h_G$', fmt(r.hG)+' m'],
+    ['全圧力 $F = \\rho g\\, h_G A$', fmt(r.F/1000)+' kN'],
+    ['圧力中心 $h_P$', fmt(r.hP)+' m'],
+    ['$h_P / h$', fmt(r.hP/r.h)],
   ]; }
 });

@@ -1,16 +1,16 @@
 // 初級：アルキメデスの原理（浮力）
 defineSim({
   id:'buoyancy', level:'beginner', order:3, name:'アルキメデスの原理（浮力）',
-  formula:'F_B = ρ_流体 g V_排除　　浮いているとき：F_B = mg',
-  explain:'物体には、押しのけた流体の重さに等しい浮力が上向きに働きます。浮いて静止した物体では浮力と重力がつり合うので、沈む深さの割合は密度の比 ρ_物体/ρ_流体 になります。',
+  formula:'$$F_B = \\rho_{\\text{流体}}\\, g\\, V_{\\text{排除}} \\qquad \\text{浮いているとき：}\\ F_B = mg$$',
+  explain:'物体には、押しのけた流体の重さに等しい浮力が上向きに働きます。浮いて静止した物体では浮力と重力がつり合うので、沈む深さの割合は密度の比 $\\rho_{\\text{物体}}/\\rho_{\\text{流体}}$ になります。',
   hint:'物体の密度を 1000 kg/m³ より大きくすると水に沈みます。液体を水銀に変えると、鉄（7870 kg/m³）でも浮くでしょうか？ 上から押す力を加えて、全部沈めるのに必要な力も確かめましょう。',
   related:['B3'],
   liveReadout:true,
   params:[
-    {id:'a',label:'立方体の一辺 a',min:5,max:25,step:1,value:10,unit:'cm'},
-    {id:'rb',label:'物体の密度 ρ_物体',min:100,max:8000,step:10,value:600,unit:'kg/m³'},
+    {id:'a',label:'立方体の一辺 $a$',min:5,max:25,step:1,value:10,unit:'cm'},
+    {id:'rb',label:'物体の密度 $\\rho_{\\text{物体}}$',min:100,max:8000,step:10,value:600,unit:'kg/m³'},
     {id:'rf',label:'液体',type:'select',value:'1000',options:[['1000','水 (1000)'],['1025','海水 (1025)'],['850','油 (850)'],['13600','水銀 (13600)']]},
-    {id:'F',label:'上から押す力 F',min:0,max:100,step:0.1,value:0,unit:'N'},
+    {id:'F',label:'上から押す力 $F$',min:0,max:100,step:0.1,value:0,unit:'N'},
   ],
   buttons:[{label:'持ち上げて落とす',action:S=>{S.y=-0.05;S.v=0;}}],
   K:900, D:0.32, // 1 m = 900 px, 水槽の深さ 0.32 m
@@ -44,11 +44,11 @@ defineSim({
   },
   readout(S){ const f=this.forces(S), a=f.a, ratio=S.P.rb/+S.P.rf, FBfull=+S.P.rf*9.81*a**3;
     return [
-      ['物体の重さ mg', fmt(f.W)+' N'],
-      ['いまの浮力 F_B', fmt(f.FB)+' N'],
-      ['沈んでいる深さ d', fmt(f.d*100)+' cm'],
-      ['理論：密度比 ρ_物体/ρ_流体', fmt(ratio)],
-      ['理論：浮くときの d = a×密度比', ratio<1?fmt(S.P.a*ratio)+' cm':'沈む'],
-      ['全没に必要な力 F_B,全 − mg', ratio<1?fmt(FBfull-f.W)+' N':'不要（沈む）'],
+      ['物体の重さ $mg$', fmt(f.W)+' N'],
+      ['いまの浮力 $F_B$', fmt(f.FB)+' N'],
+      ['沈んでいる深さ $d$', fmt(f.d*100)+' cm'],
+      ['理論：密度比 $\\rho_{\\text{物体}}/\\rho_{\\text{流体}}$', fmt(ratio)],
+      ['理論：浮くときの $d = a \\times$ 密度比', ratio<1?fmt(S.P.a*ratio)+' cm':'沈む'],
+      ['全没に必要な力 $F_{B,\\text{全}} - mg$', ratio<1?fmt(FBfull-f.W)+' N':'不要（沈む）'],
     ]; }
 });

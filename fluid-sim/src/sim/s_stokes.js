@@ -1,13 +1,13 @@
 // 中級：ストークスの抵抗法則と終端速度
 defineSim({
   id:'stokes', level:'intermediate', order:6, name:'ストークスの抵抗と終端速度',
-  formula:'D = 3πμdv　　v_t = (ρ_s − ρ) g d² / (18μ)　　（Re = ρvd/μ < 1 で有効）',
-  explain:'とても遅い流れ（Re ≪ 1）では、球の抵抗は速度に比例します。落とした粒子は加速しますが、速くなるほど抵抗が増え、重力 − 浮力 = 抵抗 となったところで一定の速度（終端速度）になります。速度は v(t) = v_t(1 − e^(−t/τ)) と指数関数的に近づき、τ = m/(3πμd) です。',
+  formula:'$$D = 3\\pi\\mu d v \\qquad v_t = \\frac{(\\rho_s - \\rho)\\, g\\, d^2}{18\\mu} \\qquad \\left(Re = \\frac{\\rho v d}{\\mu} < 1\\ \\text{で有効}\\right)$$',
+  explain:'とても遅い流れ（Re ≪ 1）では、球の抵抗は速度に比例します。落とした粒子は加速しますが、速くなるほど抵抗が増え、重力 − 浮力 = 抵抗 となったところで一定の速度（終端速度）になります。速度は $v(t) = v_t\\left(1 - e^{-t/\\tau}\\right)$ と指数関数的に近づき、$\\tau = \\dfrac{m}{3\\pi\\mu d}$ です。',
   hint:'粒径を 10 倍にすると終端速度は 100 倍になります。粒径を大きくしすぎると Re が 1 を超え、ストークスの法則が使えなくなります（右上に警告が出ます）。',
   related:['M6'],
   params:[
-    {id:'d',label:'粒子の直径 d',min:0.01,max:1,step:0.01,value:0.1,unit:'mm'},
-    {id:'rs',label:'粒子の密度 ρ_s',min:1100,max:8000,step:50,value:2650,unit:'kg/m³'},
+    {id:'d',label:'粒子の直径 $d$',min:0.01,max:1,step:0.01,value:0.1,unit:'mm'},
+    {id:'rs',label:'粒子の密度 $\\rho_s$',min:1100,max:8000,step:50,value:2650,unit:'kg/m³'},
     {id:'fl',label:'流体',type:'select',value:'0.001,1000',options:[['0.001,1000','水 (μ = 0.001, ρ = 1000)'],['1,1260','グリセリン (μ = 1.0, ρ = 1260)'],['0.1,900','油 (μ = 0.1, ρ = 900)'],['0.0000181,1.2','空気 (μ = 1.81×10⁻⁵, ρ = 1.2)']]},
   ],
   buttons:[{label:'もう一度落とす',action:S=>{S.tt=0;}}],
@@ -47,6 +47,6 @@ defineSim({
     text(g,'Re = '+fmt(r.Re)+(ok?'（< 1：ストークスの法則が使える）':'（> 1：ストークスの法則の適用範囲外）'),gx,gy-34,{size:14,weight:700,color:ok?C.b:C.a});
   },
   readout(S){ const r=this.calc(S); return [
-    ['終端速度 v_t',fmt(r.vt*1000)+' mm/s'],['レイノルズ数 Re',fmt(r.Re)],['時定数 τ = m/(3πμd)',fmt(r.tau*1000)+' ms'],
-    ['重力 − 浮力',fmt(r.W-r.B)+' N'],['終端での抵抗 3πμdv_t',fmt(3*Math.PI*r.mu*r.d*r.vt)+' N']]; }
+    ['終端速度 $v_t$',fmt(r.vt*1000)+' mm/s'],['レイノルズ数 $Re$',fmt(r.Re)],['時定数 $\\tau = m/(3\\pi\\mu d)$',fmt(r.tau*1000)+' ms'],
+    ['重力 − 浮力',fmt(r.W-r.B)+' N'],['終端での抵抗 $3\\pi\\mu d v_t$',fmt(3*Math.PI*r.mu*r.d*r.vt)+' N']]; }
 });

@@ -1,14 +1,14 @@
 // 中級：レイノルズ数と層流・乱流（レイノルズの着色実験）
 defineSim({
   id:'reynolds', level:'intermediate', order:2, name:'レイノルズ数と層流・乱流',
-  formula:'Re = ρvd/μ = vd/ν　　（円管：Re < 2300 層流 ／ Re > 4000 程度で乱流）',
+  formula:'$$Re = \\frac{\\rho v d}{\\mu} = \\frac{v d}{\\nu} \\qquad \\text{円管：}\\ Re < 2300\\ \\text{で層流、}\\ Re > 4000\\ \\text{程度で乱流}$$',
   explain:'レイノルズの実験では、管の中心に色水を流し込みます。流れが遅い（Re が小さい）ときは色水が 1 本の線のまま流れます（層流）。速くすると線が波打ち、やがてちぎれて管全体に混ざります（乱流）。Re は「慣性力 ÷ 粘性力」で、粘性が流れの乱れを抑えきれるかどうかを表します。',
   hint:'水で流速 0.1 m/s → 0.5 m/s と上げて、色の線の変化を見ましょう。同じ速さでも油（粘性が大きい）なら層流のままです。右側の速度分布は、層流では放物線、乱流では中央が平らになります。',
   related:['M2'],
   liveReadout:true,
   params:[
-    {id:'v',label:'平均流速 v',min:0.01,max:1,step:0.01,value:0.1,unit:'m/s'},
-    {id:'d',label:'管の内径 d',min:0.5,max:5,step:0.1,value:2,unit:'cm'},
+    {id:'v',label:'平均流速 $v$',min:0.01,max:1,step:0.01,value:0.1,unit:'m/s'},
+    {id:'d',label:'管の内径 $d$',min:0.5,max:5,step:0.1,value:2,unit:'cm'},
     {id:'nu',label:'流体',type:'select',value:'1e-6',options:[['1e-6','水 (ν = 1.0×10⁻⁶ m²/s)'],['1.5e-5','空気 (ν = 1.5×10⁻⁵ m²/s)'],['1e-4','油 (ν = 1.0×10⁻⁴ m²/s)']]},
   ],
   Re(S){ return S.P.v*(S.P.d/100)/(+S.P.nu); },
@@ -56,6 +56,6 @@ defineSim({
     text(g,'Re = '+fmt(Re)+'　→　'+state,xr,my-30,{align:'center',size:17,weight:700,color:Re<2300?C.b:(Re<4000?C.m:C.a)});
   },
   readout(S){ const Re=this.Re(S); return [
-    ['レイノルズ数 Re = vd/ν',fmt(Re)],['流れの状態',Re<2300?'層流':(Re<4000?'遷移域':'乱流')],
-    ['臨界流速 v_c（Re = 2300）',fmt(2300*(+S.P.nu)/(S.P.d/100))+' m/s']]; }
+    ['レイノルズ数 $Re = vd/\\nu$',fmt(Re)],['流れの状態',Re<2300?'層流':(Re<4000?'遷移域':'乱流')],
+    ['臨界流速 $v_c$（$Re = 2300$）',fmt(2300*(+S.P.nu)/(S.P.d/100))+' m/s']]; }
 });

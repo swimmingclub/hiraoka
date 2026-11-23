@@ -3,16 +3,16 @@ function colebrook(Re,rel){ if(Re<2300) return 64/Re;
   let f=0.02; for(let i=0;i<30;i++){ f=1/(-2*Math.log10(rel/3.7+2.51/(Re*Math.sqrt(f))))**2; } return f; }
 defineSim({
   id:'darcy', level:'intermediate', order:5, name:'管摩擦損失（ダルシー・ワイスバッハ）',
-  formula:'h_f = f (L/d)(v²/2g)　　層流 f = 64/Re　　乱流 1/√f = −2 log(ε/3.7d + 2.51/(Re√f))',
-  explain:'管の中を流れると壁との摩擦でエネルギーが失われ、下流ほど圧力が下がります（並んだ水柱が直線的に低くなる）。損失ヘッドは管の長さと速度ヘッド v²/2g に比例し、比例係数が管摩擦係数 f です。f は層流なら 64/Re、乱流ならレイノルズ数と管壁の相対粗さ ε/d で決まり、それを図にしたものがムーディ線図です。',
+  formula:'$$h_f = f\\,\\frac{L}{d}\\,\\frac{v^2}{2g} \\qquad \\text{層流：}\\ f = \\frac{64}{Re} \\qquad \\text{乱流：}\\ \\frac{1}{\\sqrt{f}} = -2\\log_{10}\\!\\left(\\frac{\\varepsilon/d}{3.7} + \\frac{2.51}{Re\\sqrt{f}}\\right)$$',
+  explain:'管の中を流れると壁との摩擦でエネルギーが失われ、下流ほど圧力が下がります（並んだ水柱が直線的に低くなる）。損失ヘッドは管の長さと速度ヘッド $v^2/2g$ に比例し、比例係数が管摩擦係数 $f$ です。$f$ は層流なら $64/Re$、乱流ならレイノルズ数と管壁の相対粗さ $\\varepsilon/d$ で決まり、それを図にしたものがムーディ線図です。',
   hint:'流速を 2 倍にすると損失ヘッドはほぼ 4 倍、ポンプ動力はほぼ 8 倍になります。ムーディ線図の上の点が、粗さや Re によってどの曲線に乗るかを見ましょう。M5 の問題のように f = 0.02 と与えられたときは「f を指定する」をオンにします。',
   related:['M5'],
   params:[
-    {id:'v',label:'平均流速 v',min:0.05,max:5,step:0.05,value:2,unit:'m/s'},
-    {id:'d',label:'内径 d',min:1,max:50,step:1,value:10,unit:'cm'},
-    {id:'L',label:'管の長さ L',min:10,max:1000,step:10,value:200,unit:'m'},
-    {id:'eps',label:'管壁の粗さ ε',type:'select',value:'0.045',options:[['0.0015','引抜き管・ガラス (0.0015 mm)'],['0.045','商用鋼管 (0.045 mm)'],['0.26','鋳鉄管 (0.26 mm)'],['1.5','コンクリート管 (1.5 mm)']]},
-    {id:'fix',label:'f を指定する（f = 0.02）',type:'check',value:true},
+    {id:'v',label:'平均流速 $v$',min:0.05,max:5,step:0.05,value:2,unit:'m/s'},
+    {id:'d',label:'内径 $d$',min:1,max:50,step:1,value:10,unit:'cm'},
+    {id:'L',label:'管の長さ $L$',min:10,max:1000,step:10,value:200,unit:'m'},
+    {id:'eps',label:'管壁の粗さ $\\varepsilon$',type:'select',value:'0.045',options:[['0.0015','引抜き管・ガラス (0.0015 mm)'],['0.045','商用鋼管 (0.045 mm)'],['0.26','鋳鉄管 (0.26 mm)'],['1.5','コンクリート管 (1.5 mm)']]},
+    {id:'fix',label:'$f$ を指定する（$f = 0.02$）',type:'check',value:true},
   ],
   calc(S){ const nu=1e-6, d=S.P.d/100, v=S.P.v, Re=v*d/nu, rel=(+S.P.eps)/1000/d;
     const fc=colebrook(Re,rel), f=S.P.fix?0.02:fc, hf=f*S.P.L/d*v*v/19.62, Q=Math.PI/4*d*d*v;
@@ -50,6 +50,6 @@ defineSim({
     text(g,'Re = '+fmt(r.Re)+', f = '+fmt(r.f),px+12,py-14,{size:13,weight:700,color:C.hi,bg:C.paper});
   },
   readout(S){ const r=this.calc(S); return [
-    ['レイノルズ数 Re',fmt(r.Re)],['相対粗さ ε/d',fmt(r.rel)],['f（コールブルック式）',fmt(r.fc)],['使った f',fmt(r.f)],
-    ['損失ヘッド h_f',fmt(r.hf)+' m'],['圧力損失 Δp',fmt(r.dp/1000)+' kPa'],['流量 Q',fmt(r.Q*1000)+' L/s'],['ポンプ動力 ρgQh_f',fmt(r.P)+' W']]; }
+    ['レイノルズ数 $Re$',fmt(r.Re)],['相対粗さ $\\varepsilon/d$',fmt(r.rel)],['$f$（コールブルック式）',fmt(r.fc)],['使った $f$',fmt(r.f)],
+    ['損失ヘッド $h_f$',fmt(r.hf)+' m'],['圧力損失 $\\Delta p$',fmt(r.dp/1000)+' kPa'],['流量 $Q$',fmt(r.Q*1000)+' L/s'],['ポンプ動力 $\\rho g Q h_f$',fmt(r.P)+' W']]; }
 });

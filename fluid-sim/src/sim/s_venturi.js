@@ -1,15 +1,15 @@
 // 初級：ベルヌーイの定理（ベンチュリ管・ピトー管）
 defineSim({
   id:'venturi', level:'beginner', order:6, name:'ベルヌーイの定理（ベンチュリ管・ピトー管）',
-  formula:'p/ρg + v²/2g + z = 一定（全ヘッド）　　p₁ − p₂ = ½ρ(v₂² − v₁²)',
+  formula:'$$\\frac{p}{\\rho g} + \\frac{v^2}{2g} + z = \\text{一定（全ヘッド）} \\qquad p_1 - p_2 = \\frac{1}{2}\\rho\\,(v_2^2 - v_1^2)$$',
   explain:'流線に沿って「圧力ヘッド + 速度ヘッド + 位置ヘッド」の合計は一定です。管がしぼられた「のど部」では連続の式により流れが速くなり、そのぶん圧力が下がります。細い管（マノメータ）の水柱の高さが圧力ヘッドを表します。流れに向けたピトー管の水柱は全ヘッドまで上がります。',
-  hint:'のど部を細くするほど水柱の差が大きくなります。点線（全ヘッド）と各水柱の差が、その場所の速度ヘッド v²/2g です。のど部の圧力が負になると、実際の管ではキャビテーション（気泡の発生）が起こります。',
+  hint:'のど部を細くするほど水柱の差が大きくなります。点線（全ヘッド）と各水柱の差が、その場所の速度ヘッド $v^2/2g$ です。のど部の圧力が負になると、実際の管ではキャビテーション（気泡の発生）が起こります。',
   related:['B6'],
   params:[
-    {id:'v1',label:'入口の流速 v₁',min:0.2,max:3,step:0.01,value:1.41,unit:'m/s'},
-    {id:'d1',label:'入口の内径 d₁',min:6,max:16,step:0.5,value:10,unit:'cm'},
-    {id:'d2',label:'のど部の内径 d₂',min:2,max:16,step:0.5,value:5,unit:'cm'},
-    {id:'h1',label:'入口の圧力ヘッド p₁/ρg',min:0.5,max:2.4,step:0.05,value:2,unit:'m'},
+    {id:'v1',label:'入口の流速 $v_1$',min:0.2,max:3,step:0.01,value:1.41,unit:'m/s'},
+    {id:'d1',label:'入口の内径 $d_1$',min:6,max:16,step:0.5,value:10,unit:'cm'},
+    {id:'d2',label:'のど部の内径 $d_2$',min:2,max:16,step:0.5,value:5,unit:'cm'},
+    {id:'h1',label:'入口の圧力ヘッド $p_1/\\rho g$',min:0.5,max:2.4,step:0.05,value:2,unit:'m'},
   ],
   init(S){ S.parts=Array.from({length:220},()=>({x:40+Math.random()*880,e:Math.random()*2-1})); },
   R(S,x){ const sc=4, r1=S.P.d1*sc, r2=S.P.d2*sc; // 半径 px（1 cm 直径 = 8 px）
@@ -49,7 +49,7 @@ defineSim({
     text(g,'v₂ = '+fmt(r.v2)+' m/s',480,cy+this.R(S,480)+24,{align:'center',size:14,weight:700,color:C.accent});
   },
   readout(S){ const r=this.calc(S); return [
-    ['のど部の流速 v₂',fmt(r.v2)+' m/s'],['流量 Q',fmt(r.Q*1000)+' L/s'],
-    ['圧力差 p₁ − p₂',fmt(r.dp/1000)+' kPa'],['水柱の差 Δh',fmt(S.P.h1-r.h2)+' m'],
-    ['ピトー管の水柱差 v₁²/2g',fmt(r.hv1*100)+' cm'],['全ヘッド H',fmt(r.H0)+' m']]; }
+    ['のど部の流速 $v_2$',fmt(r.v2)+' m/s'],['流量 $Q$',fmt(r.Q*1000)+' L/s'],
+    ['圧力差 $p_1 - p_2$',fmt(r.dp/1000)+' kPa'],['水柱の差 $\\Delta h$',fmt(S.P.h1-r.h2)+' m'],
+    ['ピトー管の水柱差 $v_1^2/2g$',fmt(r.hv1*100)+' cm'],['全ヘッド $H$',fmt(r.H0)+' m']]; }
 });

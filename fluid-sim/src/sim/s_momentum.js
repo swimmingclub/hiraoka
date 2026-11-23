@@ -1,15 +1,15 @@
 // 中級：運動量の法則（噴流が板に及ぼす力）
 defineSim({
   id:'momentum', level:'intermediate', order:1, name:'運動量の法則（噴流と板）',
-  formula:'F = ρQ_rel (v − u)(1 − cos β)　　Q_rel = A(v − u)',
+  formula:'$$F = \\rho Q_{\\text{rel}}\\,(v - u)(1 - \\cos\\beta) \\qquad Q_{\\text{rel}} = A\\,(v - u)$$',
   explain:'検査体積（点線の枠）に入る運動量と出る運動量の差が、板が流体に及ぼす力です。その反作用が板が受ける力 F です。噴流を β だけ曲げると、噴流方向の速度は (v−u) から (v−u)cos β に変わります。板が動いているときは、板から見た相対速度 v − u で考えます。',
   hint:'曲げ角 β を 90°（平板）から 180°（お椀形のバケット）にすると、力は 2 倍になります。ペルトン水車がバケットを使うのはこのためです。板を噴流と同じ速さで動かすと、力はどうなるでしょう？',
   related:['M1'],
   params:[
-    {id:'d',label:'噴流の直径 d',min:1,max:10,step:0.5,value:5,unit:'cm'},
-    {id:'v',label:'噴流の速度 v',min:2,max:40,step:0.5,value:20,unit:'m/s'},
-    {id:'u',label:'板の速度 u（噴流と同じ向き）',min:0,max:20,step:0.5,value:0,unit:'m/s'},
-    {id:'beta',label:'噴流を曲げる角度 β',min:30,max:180,step:5,value:90,unit:'°'},
+    {id:'d',label:'噴流の直径 $d$',min:1,max:10,step:0.5,value:5,unit:'cm'},
+    {id:'v',label:'噴流の速度 $v$',min:2,max:40,step:0.5,value:20,unit:'m/s'},
+    {id:'u',label:'板の速度 $u$（噴流と同じ向き）',min:0,max:20,step:0.5,value:0,unit:'m/s'},
+    {id:'beta',label:'噴流を曲げる角度 $\\beta$',min:30,max:180,step:5,value:90,unit:'°'},
   ],
   calc(S){ const A=Math.PI/4*(S.P.d/100)**2, vr=Math.max(S.P.v-S.P.u,0), b=S.P.beta*Math.PI/180;
     const Q=A*vr, F=1000*Q*vr*(1-Math.cos(b)); return {A,vr,Q,F,b,P:F*S.P.u}; },
@@ -60,6 +60,6 @@ defineSim({
   // 曲面（円弧）上の点：始点 (xp−R, cy) で +x 向き、角度 a だけ向きを変えた位置。sgn=1 で上へ曲がる
   path(xp,cy,R,a,sgn){ return [xp-R+R*Math.sin(a), cy-sgn*R*(1-Math.cos(a))]; },
   readout(S){ const r=this.calc(S); return [
-    ['噴流の断面積 A',fmt(r.A*1e4)+' cm²'],['板に当たる流量 Q = A(v−u)',fmt(r.Q*1000)+' L/s'],
-    ['出口の噴流方向速度 (v−u)cos β',fmt(r.vr*Math.cos(r.b))+' m/s'],['板が受ける力 F',fmt(r.F)+' N'],['板がされる仕事率 Fu',fmt(r.P)+' W']]; }
+    ['噴流の断面積 $A$',fmt(r.A*1e4)+' cm²'],['板に当たる流量 $Q = A(v-u)$',fmt(r.Q*1000)+' L/s'],
+    ['出口の噴流方向速度 $(v-u)\\cos\\beta$',fmt(r.vr*Math.cos(r.b))+' m/s'],['板が受ける力 $F$',fmt(r.F)+' N'],['板がされる仕事率 $Fu$',fmt(r.P)+' W']]; }
 });

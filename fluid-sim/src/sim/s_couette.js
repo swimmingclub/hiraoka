@@ -1,16 +1,16 @@
 // 中級：ニュートンの粘性法則とクエット流れ（圧力勾配つき＝NS 方程式の厳密解）
 defineSim({
   id:'couette', level:'intermediate', order:4, name:'粘性法則とクエット・ポアズイユ流れ',
-  formula:'τ = μ du/dy　　u(y) = U·y/h + (1/2μ)(−dp/dx)·y(h − y)',
-  explain:'平行な 2 枚の板の間の流れは、ナビエ・ストークス方程式が 0 = −dp/dx + μ d²u/dy² に簡単化され、手で解けます。上板を速度 U で動かすだけなら直線分布（クエット流れ）、圧力勾配だけなら放物線分布（平面ポアズイユ流れ）、両方あればその足し算になります。壁のせん断応力は τ = μ du/dy（分布の傾き）です。',
+  formula:'$$\\tau = \\mu \\frac{du}{dy} \\qquad u(y) = U\\frac{y}{h} + \\frac{1}{2\\mu}\\left(-\\frac{dp}{dx}\\right) y\\,(h - y)$$',
+  explain:'平行な 2 枚の板の間の流れは、ナビエ・ストークス方程式が $0 = -\\frac{dp}{dx} + \\mu \\frac{d^2u}{dy^2}$ に簡単化され、手で解けます。上板を速度 U で動かすだけなら直線分布（クエット流れ）、圧力勾配だけなら放物線分布（平面ポアズイユ流れ）、両方あればその足し算になります。壁のせん断応力は $\\tau = \\mu\\, du/dy$（分布の傾き）です。',
   hint:'「M4 の条件」と「A5 の条件」のボタンで問題の設定にできます。圧力勾配を負（流れと逆向き）にすると、下の方で逆流が起こります。軸受けの潤滑で見られる現象です。',
   related:['M4','A5'],
   params:[
-    {id:'U',label:'上板の速度 U',min:0,max:2,step:0.05,value:1,unit:'m/s'},
-    {id:'h',label:'すき間 h',min:0.5,max:5,step:0.1,value:2,unit:'mm'},
-    {id:'G',label:'圧力勾配 −dp/dx',min:-100000,max:100000,step:500,value:0,unit:'Pa/m',digits:0},
+    {id:'U',label:'上板の速度 $U$',min:0,max:2,step:0.05,value:1,unit:'m/s'},
+    {id:'h',label:'すき間 $h$',min:0.5,max:5,step:0.1,value:2,unit:'mm'},
+    {id:'G',label:'圧力勾配 $-dp/dx$',min:-100000,max:100000,step:500,value:0,unit:'Pa/m',digits:0},
     {id:'mu',label:'粘性係数 μ',type:'select',value:'0.05',options:[['0.001','水 (0.001 Pa·s)'],['0.05','軽油・潤滑油 (0.05 Pa·s)'],['0.1','油 (0.1 Pa·s)'],['1','グリセリン (1.0 Pa·s)']]},
-    {id:'A',label:'上板の面積 A',min:0.1,max:2,step:0.1,value:0.5,unit:'m²'},
+    {id:'A',label:'上板の面積 $A$',min:0.1,max:2,step:0.1,value:0.5,unit:'m²'},
   ],
   buttons:[
     {label:'M4 の条件',action:S=>{setParam('U',1);setParam('h',2);setParam('G',0);setSel('mu','0.05');setParam('A',0.5);}},
@@ -50,9 +50,9 @@ defineSim({
     text(g,'h = '+fmt(S.P.h)+' mm（拡大表示）',(x0+x1)/2,560,{align:'center',size:13,color:C.muted});
   },
   readout(S){ const r=this.calc(S); return [
-    ['最大流速 u_max',fmt(r.umax)+' m/s'],['単位幅流量 q',fmt(r.q)+' m²/s'],['平均流速 q/h',fmt(r.q/r.h)+' m/s'],
-    ['上板のせん断応力 τ',fmt(r.tauT)+' Pa'],['下板のせん断応力 τ_w',fmt(r.tauB)+' Pa'],
-    ['上板を動かす力 F = τA',fmt(r.F)+' N'],['必要な動力 FU',fmt(r.F*r.U)+' W']]; }
+    ['最大流速 $u_{\\max}$',fmt(r.umax)+' m/s'],['単位幅流量 $q$',fmt(r.q)+' m²/s'],['平均流速 $q/h$',fmt(r.q/r.h)+' m/s'],
+    ['上板のせん断応力 $\\tau$',fmt(r.tauT)+' Pa'],['下板のせん断応力 $\\tau_w$',fmt(r.tauB)+' Pa'],
+    ['上板を動かす力 $F = \\tau A$',fmt(r.F)+' N'],['必要な動力 $FU$',fmt(r.F*r.U)+' W']]; }
 });
 // select を外部から変更するための補助
 function setSel(id,v){ S.P[id]=v; const el=document.getElementById('p-'+cur.id+'-'+id); if(el){ el.value=v; el.dispatchEvent(new Event('change')); } }

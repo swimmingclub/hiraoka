@@ -1,15 +1,15 @@
 // 初級：パスカルの原理（油圧ジャッキ）
 defineSim({
   id:'pascal', level:'beginner', order:2, name:'パスカルの原理（油圧ジャッキ）',
-  formula:'p = F₁/A₁ = F₂/A₂　　A₁x₁ = A₂x₂',
+  formula:'$$p = \\frac{F_1}{A_1} = \\frac{F_2}{A_2} \\qquad A_1 x_1 = A_2 x_2$$',
   explain:'密閉した液体に加えた圧力は、液体のすべての点に同じ大きさで伝わります。断面積の大きいピストンには、面積比の分だけ大きな力が出ます。そのかわり動く距離は面積比の分だけ小さくなり、仕事（力×距離）は両側で等しくなります。',
   hint:'大ピストンの直径を 2 倍にすると、持ち上げる力は何倍になるでしょう？ 小ピストンを押し込んで、大ピストンがどれだけ上がるかも見てみましょう。',
   related:['B2'],
   params:[
-    {id:'F1',label:'小ピストンを押す力 F₁',min:10,max:300,step:5,value:100,unit:'N'},
-    {id:'d1',label:'小ピストンの直径 d₁',min:1,max:6,step:0.5,value:2,unit:'cm'},
-    {id:'d2',label:'大ピストンの直径 d₂',min:8,max:40,step:1,value:20,unit:'cm'},
-    {id:'x1',label:'小ピストンの押し込み量 x₁',min:0,max:20,step:0.5,value:10,unit:'cm'},
+    {id:'F1',label:'小ピストンを押す力 $F_1$',min:10,max:300,step:5,value:100,unit:'N'},
+    {id:'d1',label:'小ピストンの直径 $d_1$',min:1,max:6,step:0.5,value:2,unit:'cm'},
+    {id:'d2',label:'大ピストンの直径 $d_2$',min:8,max:40,step:1,value:20,unit:'cm'},
+    {id:'x1',label:'小ピストンの押し込み量 $x_1$',min:0,max:20,step:0.5,value:10,unit:'cm'},
   ],
   calc(S){ const P=S.P, A1=Math.PI/4*(P.d1/100)**2, A2=Math.PI/4*(P.d2/100)**2, p=P.F1/A1;
     return {A1,A2,p,F2:p*A2,ratio:A2/A1,x2:P.x1*A1/A2,W1:P.F1*P.x1/100}; },
@@ -48,11 +48,11 @@ defineSim({
     text(g,'x₂ = '+fmt(r.x2*10)+' mm（上昇）',xR-w2/2-14,top+20,{align:'right',size:13,color:C.muted});
   },
   readout(S){ const r=this.calc(S); return [
-    ['面積比 A₂/A₁', fmt(r.ratio)],
-    ['圧力 p = F₁/A₁', fmt(r.p/1000)+' kPa'],
-    ['大ピストンの力 F₂', fmt(r.F2)+' N'],
-    ['大ピストンの上昇 x₂', fmt(r.x2*10)+' mm'],
-    ['仕事 F₁x₁', fmt(r.W1)+' J'],
-    ['仕事 F₂x₂', fmt(r.F2*r.x2/100)+' J'],
+    ['面積比 $A_2/A_1$', fmt(r.ratio)],
+    ['圧力 $p = F_1/A_1$', fmt(r.p/1000)+' kPa'],
+    ['大ピストンの力 $F_2$', fmt(r.F2)+' N'],
+    ['大ピストンの上昇 $x_2$', fmt(r.x2*10)+' mm'],
+    ['仕事 $F_1 x_1$', fmt(r.W1)+' J'],
+    ['仕事 $F_2 x_2$', fmt(r.F2*r.x2/100)+' J'],
   ]; }
 });

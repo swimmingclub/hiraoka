@@ -9,3 +9,8 @@
 - `src/sim/shell.html`, `core.js`, `s_*.js` + `build_sim.py` → `simulator.html`
   - シミュレータは `defineSim({...})` で 1 ファイル 1 本。`#id` で直接開ける
 - `LOOP_PLAN.md` … 15 周のループ作業の記録
+
+## 数式の表示
+- 文字列の中に TeX で `$…$`（文中）や `$$…$$`（別行）と書くと、ビルド時に MathJax で SVG に変換して埋め込む
+- 初回のみ `cd tools && npm install` が必要（`tools/tex2svg.js`, `tools/mathify.py`）
+- キャンバス内の文字は `h_P` や `u_{max}` と書くと下付き文字で描く

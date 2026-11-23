@@ -37,7 +37,8 @@ main{padding-block:20px 40px;padding-left:24px;padding-right:max(16px,env(safe-a
 .title{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
 .title h2{font-family:var(--f-display);font-weight:800;font-size:clamp(20px,3vw,26px);margin:0;text-wrap:balance}
 .lvl{font-size:12px;font-weight:700;color:var(--paper);border-radius:4px;padding:1px 8px}
-.formula{font-family:var(--f-mono);font-size:14px;background:var(--code);padding:6px 12px;border-radius:6px;overflow-wrap:anywhere;align-self:flex-start}
+.formula{font-size:16px;background:var(--code);padding:6px 16px;border-radius:8px;max-width:100%;box-sizing:border-box;overflow-x:auto;align-self:flex-start;min-width:0}
+/*__MATHCSS__*/
 .explain{margin:0;color:var(--muted);max-width:75ch}
 .stage{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:start}
 .canvasbox{background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:0}
@@ -52,7 +53,7 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:16/10;touch-action:none
 .ctl select{font:inherit;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
 .chk{display:flex;gap:6px;align-items:center;font-size:13px;margin-bottom:6px;cursor:pointer}
 table.ro{width:100%;border-collapse:collapse;font-size:13px}
-table.ro td{padding:3px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.ro td{padding:4px 0;border-bottom:1px solid var(--line);vertical-align:top}
 table.ro td:last-child{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;padding-left:8px;white-space:nowrap}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 button.btn{font:inherit;font-size:13px;font-weight:700;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
