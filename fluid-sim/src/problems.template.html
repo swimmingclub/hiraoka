@@ -1,0 +1,126 @@
+<title>流体力学 問題集</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Murecho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 実験ノート風。左に級ごとのタブ、定理カード→計算問題の順。解説は折りたたみ */
+:root{
+  --bg:#f3f6f7; --paper:#ffffff; --ink:#14232b; --muted:#5a6d77; --line:#d4dee2;
+  --accent:#0b6e8a; --accent-soft:#dcefF4; --b:#2f8f5b; --m:#c07a12; --a:#b23a48; --code:#eef3f5;
+  --f-display:"Murecho","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75}
+.wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.2;margin:0 0 6px;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:62ch}
+.const{margin-top:12px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted);background:var(--code);border-radius:6px;padding:8px 12px;display:inline-block}
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 8px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:10px;z-index:5}
+nav.tabs button{font:inherit;font-family:var(--f-display);font-weight:700;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs button .dot{width:9px;height:9px;border-radius:50%}
+nav.tabs button[aria-selected="true"]{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+nav.tabs button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lv-desc{color:var(--muted);margin:4px 0 20px}
+h2{font-family:var(--f-display);font-size:13px;letter-spacing:.12em;color:var(--muted);margin:28px 0 12px;font-weight:700}
+.thms{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.thm{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:6px}
+.thm h3{margin:0;font-family:var(--f-display);font-size:16px;font-weight:700}
+.formula{font-family:var(--f-mono);font-size:13.5px;background:var(--code);padding:6px 10px;border-radius:6px;overflow-wrap:anywhere}
+.thm p{margin:0;font-size:13.5px;color:var(--muted)}
+.probs{display:flex;flex-direction:column;gap:16px}
+.prob{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-width:0}
+.prob .head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.pid{font-family:var(--f-mono);font-weight:600;font-size:13px;padding:1px 8px;border-radius:4px;color:var(--paper)}
+.prob h3{margin:0;font-family:var(--f-display);font-size:18px;font-weight:700;text-wrap:balance}
+.prob .q{margin:10px 0 12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+details{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
+summary{cursor:pointer;font-weight:700;color:var(--accent);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";}
+details[open] summary::before{content:"▾ ";}
+ol.steps{margin:10px 0;padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
+ol.steps li{font-variant-numeric:tabular-nums}
+.ans{background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-weight:700;font-variant-numeric:tabular-nums}
+.point{margin-top:10px;font-size:13.5px;color:var(--muted)}
+.point b{color:var(--ink)}
+.simlink{font-size:13px;font-weight:700;text-decoration:none;color:var(--accent);border:1.5px solid var(--accent);border-radius:999px;padding:3px 12px}
+.simlink[aria-disabled="true"]{color:var(--muted);border-color:var(--line);pointer-events:none}
+.progress{font-size:13px;color:var(--muted);margin-left:auto}
+label.done{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.prob{transition:border-color .2s}.prob:hover{border-color:var(--accent)}}
+</style>
+<div class="wrap">
+<header>
+  <h1>流体力学 問題集</h1>
+  <p>大学の流体力学で扱う定理を初級・中級・上級に分け、各級6問の計算問題にしました。問題を解いてから「解説」を開き、シミュレータで数値を変えて確かめましょう。</p>
+  <div class="const" id="const"></div>
+</header>
+<nav class="tabs" role="tablist" id="tabs"></nav>
+<p class="lv-desc" id="lvdesc"></p>
+<h2>この級の定理</h2>
+<div class="thms" id="thms"></div>
+<h2 style="display:flex;align-items:center">計算問題 <span class="progress" id="progress"></span></h2>
+<div class="probs" id="probs"></div>
+</div>
+<script>
+const DATA = __DATA__;
+const SIM_URL = "__SIM_URL__";
+const LV = {beginner:{label:"初級",color:"var(--b)"},intermediate:{label:"中級",color:"var(--m)"},advanced:{label:"上級",color:"var(--a)"}};
+let done = {};
+try{done = JSON.parse(localStorage.getItem("fluid-done")||"{}")}catch(e){}
+const esc = s => s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+document.getElementById("const").textContent = DATA.meta.constants;
+const tabs = document.getElementById("tabs");
+function render(level){
+  [...tabs.children].forEach(b=>b.setAttribute("aria-selected", b.dataset.lv===level));
+  document.getElementById("lvdesc").textContent = DATA.meta.levels[level];
+  const thName = {};
+  DATA.theorems.forEach(t=>thName[t.id]=t.name);
+  document.getElementById("thms").innerHTML = DATA.theorems.filter(t=>t.level===level).map(t=>`
+    <article class="thm"><h3>${esc(t.name)}</h3><div class="formula">${esc(t.formula)}</div><p>${esc(t.idea)}</p></article>`).join("");
+  const ps = DATA.problems.filter(p=>p.level===level);
+  document.getElementById("probs").innerHTML = ps.map(p=>{
+    const href = SIM_URL ? `${SIM_URL}#${p.sim}` : "";
+    return `<article class="prob" id="${p.id}">
+      <div class="head"><span class="pid" style="background:${LV[level].color}">${p.id}</span><h3>${esc(p.title)}</h3></div>
+      <p class="q">${esc(p.question)}</p>
+      <div class="row">
+        <a class="simlink" ${href?`href="${href}" target="_blank" rel="noopener"`:'aria-disabled="true"'}>シミュレータ：${esc(thName[p.sim]||p.sim)}${href?" ↗":"（準備中）"}</a>
+        <label class="done"><input type="checkbox" id="chk-${p.id}" data-id="${p.id}" ${done[p.id]?"checked":""}> 解けた</label>
+      </div>
+      <details><summary>解説と答えを見る</summary>
+        <ol class="steps">${p.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+        <div class="ans">答え：${esc(p.answer)}</div>
+        <p class="point"><b>ポイント：</b>${esc(p.point)}</p>
+      </details></article>`}).join("");
+  updateProgress(ps);
+  try{localStorage.setItem("fluid-level",level)}catch(e){}
+}
+function updateProgress(ps){
+  const n = ps.filter(p=>done[p.id]).length;
+  document.getElementById("progress").textContent = `解けた問題 ${n} / ${ps.length}`;
+}
+document.getElementById("probs").addEventListener("change",e=>{
+  if(!e.target.dataset.id) return;
+  done[e.target.dataset.id] = e.target.checked;
+  try{localStorage.setItem("fluid-done",JSON.stringify(done))}catch(err){}
+  const lv = tabs.querySelector('[aria-selected="true"]').dataset.lv;
+  updateProgress(DATA.problems.filter(p=>p.level===lv));
+});
+Object.entries(LV).forEach(([k,v])=>{
+  const b=document.createElement("button");b.role="tab";b.dataset.lv=k;b.id="tab-"+k;
+  b.innerHTML=`<span class="dot" style="background:${v.color}"></span>${v.label}（${DATA.problems.filter(p=>p.level===k).length}問）`;
+  b.onclick=()=>{location.hash=k};tabs.appendChild(b);
+});
+function fromHash(){const h=location.hash.slice(1);let lv="beginner";try{lv=localStorage.getItem("fluid-level")||lv}catch(e){}
+  if(LV[h]) lv=h; render(lv);}
+window.addEventListener("hashchange",fromHash);fromHash();
+</script>

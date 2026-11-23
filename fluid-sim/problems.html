@@ -1,0 +1,126 @@
+<title>流体力学 問題集</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Murecho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 実験ノート風。左に級ごとのタブ、定理カード→計算問題の順。解説は折りたたみ */
+:root{
+  --bg:#f3f6f7; --paper:#ffffff; --ink:#14232b; --muted:#5a6d77; --line:#d4dee2;
+  --accent:#0b6e8a; --accent-soft:#dcefF4; --b:#2f8f5b; --m:#c07a12; --a:#b23a48; --code:#eef3f5;
+  --f-display:"Murecho","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e171c; --paper:#152229; --ink:#e3edf1; --muted:#93a8b2; --line:#26363e;
+  --accent:#5cc2dc; --accent-soft:#16343f; --b:#5fcf8f; --m:#f0b04d; --a:#ef7d8a; --code:#1b2b33; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75}
+.wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.2;margin:0 0 6px;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:62ch}
+.const{margin-top:12px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted);background:var(--code);border-radius:6px;padding:8px 12px;display:inline-block}
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 8px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:10px;z-index:5}
+nav.tabs button{font:inherit;font-family:var(--f-display);font-weight:700;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs button .dot{width:9px;height:9px;border-radius:50%}
+nav.tabs button[aria-selected="true"]{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+nav.tabs button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lv-desc{color:var(--muted);margin:4px 0 20px}
+h2{font-family:var(--f-display);font-size:13px;letter-spacing:.12em;color:var(--muted);margin:28px 0 12px;font-weight:700}
+.thms{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.thm{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:6px}
+.thm h3{margin:0;font-family:var(--f-display);font-size:16px;font-weight:700}
+.formula{font-family:var(--f-mono);font-size:13.5px;background:var(--code);padding:6px 10px;border-radius:6px;overflow-wrap:anywhere}
+.thm p{margin:0;font-size:13.5px;color:var(--muted)}
+.probs{display:flex;flex-direction:column;gap:16px}
+.prob{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-width:0}
+.prob .head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.pid{font-family:var(--f-mono);font-weight:600;font-size:13px;padding:1px 8px;border-radius:4px;color:var(--paper)}
+.prob h3{margin:0;font-family:var(--f-display);font-size:18px;font-weight:700;text-wrap:balance}
+.prob .q{margin:10px 0 12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+details{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
+summary{cursor:pointer;font-weight:700;color:var(--accent);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";}
+details[open] summary::before{content:"▾ ";}
+ol.steps{margin:10px 0;padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
+ol.steps li{font-variant-numeric:tabular-nums}
+.ans{background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-weight:700;font-variant-numeric:tabular-nums}
+.point{margin-top:10px;font-size:13.5px;color:var(--muted)}
+.point b{color:var(--ink)}
+.simlink{font-size:13px;font-weight:700;text-decoration:none;color:var(--accent);border:1.5px solid var(--accent);border-radius:999px;padding:3px 12px}
+.simlink[aria-disabled="true"]{color:var(--muted);border-color:var(--line);pointer-events:none}
+.progress{font-size:13px;color:var(--muted);margin-left:auto}
+label.done{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.prob{transition:border-color .2s}.prob:hover{border-color:var(--accent)}}
+</style>
+<div class="wrap">
+<header>
+  <h1>流体力学 問題集</h1>
+  <p>大学の流体力学で扱う定理を初級・中級・上級に分け、各級6問の計算問題にしました。問題を解いてから「解説」を開き、シミュレータで数値を変えて確かめましょう。</p>
+  <div class="const" id="const"></div>
+</header>
+<nav class="tabs" role="tablist" id="tabs"></nav>
+<p class="lv-desc" id="lvdesc"></p>
+<h2>この級の定理</h2>
+<div class="thms" id="thms"></div>
+<h2 style="display:flex;align-items:center">計算問題 <span class="progress" id="progress"></span></h2>
+<div class="probs" id="probs"></div>
+</div>
+<script>
+const DATA = {"meta": {"title": "流体力学 定理と計算問題", "constants": "特に断りのない限り g = 9.81 m/s², 水の密度 ρ = 1000 kg/m³, 圧力はゲージ圧", "levels": {"beginner": "初級：静水力学・連続の式・ベルヌーイの定理", "intermediate": "中級：運動量の法則・粘性・管路の流れ", "advanced": "上級：ポテンシャル流・境界層・ナビエ・ストークス方程式・次元解析"}}, "theorems": [{"id": "hydrostatic", "level": "beginner", "name": "静水圧の式", "formula": "p = p₀ + ρgh", "idea": "静止流体中の圧力は深さに比例して増え、向きによらず同じ大きさで面を垂直に押す。平面壁が受ける全圧力は F = ρg h_G A（h_G は図心の深さ）。"}, {"id": "pascal", "level": "beginner", "name": "パスカルの原理", "formula": "F₁/A₁ = F₂/A₂", "idea": "密閉容器内の流体に加えた圧力は、すべての点に同じ大きさで伝わる。小さい力を大きい力に変換できる（油圧ジャッキ）。"}, {"id": "buoyancy", "level": "beginner", "name": "アルキメデスの原理", "formula": "F_B = ρ_流体 g V_排除", "idea": "浮力は物体が押しのけた流体の重さに等しい。浮いている物体では浮力 = 重力。"}, {"id": "continuity", "level": "beginner", "name": "連続の式（質量保存）", "formula": "A₁v₁ = A₂v₂ = Q", "idea": "非圧縮性流体では、管のどの断面でも流量 Q は同じ。断面積が狭いほど速くなる。"}, {"id": "torricelli", "level": "beginner", "name": "トリチェリの定理", "formula": "v = √(2gh)", "idea": "水面から深さ h の小孔からの流出速度は、高さ h から自由落下した速さと同じ。ベルヌーイの定理の特別な場合。"}, {"id": "venturi", "level": "beginner", "name": "ベルヌーイの定理（ベンチュリ管・ピトー管）", "formula": "p + ½ρv² + ρgz = 一定", "idea": "定常・非粘性・非圧縮の流れでは流線に沿って全エネルギー（圧力・運動・位置）が保存される。速いところほど圧力が低い。"}, {"id": "momentum", "level": "intermediate", "name": "運動量の法則（検査体積）", "formula": "ΣF = ρQ(v_出 − v_入)", "idea": "検査体積に出入りする運動量の差が、流体に働く力の合計に等しい。噴流が板を押す力やノズルに働く力を求める。"}, {"id": "reynolds", "level": "intermediate", "name": "レイノルズ数と層流・乱流", "formula": "Re = ρvd/μ = vd/ν", "idea": "慣性力と粘性力の比。円管では Re < 約 2300 で層流、それより大きいと乱流に遷移しやすい。"}, {"id": "poiseuille", "level": "intermediate", "name": "ハーゲン・ポアズイユの法則", "formula": "Q = πd⁴Δp/(128μL)", "idea": "円管内の層流は放物線状の速度分布になり、流量は直径の 4 乗に比例する。最大流速は平均流速の 2 倍。"}, {"id": "couette", "level": "intermediate", "name": "ニュートンの粘性法則とクエット流れ", "formula": "τ = μ du/dy", "idea": "せん断応力は速度勾配に比例する。平板間を一方の板が動くと速度分布は直線（クエット流れ）、圧力勾配があると放物線が重なる。"}, {"id": "darcy", "level": "intermediate", "name": "ダルシー・ワイスバッハの式（管摩擦損失）", "formula": "h_f = f (L/d) v²/(2g)", "idea": "管路の摩擦による損失ヘッドは長さと速度の 2 乗に比例する。管摩擦係数 f は層流で 64/Re、乱流では Re と粗さで決まる（ムーディ線図）。"}, {"id": "stokes", "level": "intermediate", "name": "ストークスの抵抗法則と終端速度", "formula": "D = 3πμdv,  v_t = (ρ_s − ρ)g d²/(18μ)", "idea": "Re ≪ 1 の遅い流れでは抵抗は速度に比例する。重力 − 浮力 = 抵抗 となる速度が終端速度。"}, {"id": "cylinder", "level": "advanced", "name": "円柱まわりのポテンシャル流とダランベールのパラドックス", "formula": "u_θ = −2U sinθ,  C_p = 1 − 4sin²θ", "idea": "非粘性・非回転の流れでは円柱表面の圧力分布が前後対称になり、抵抗がゼロになる（ダランベールのパラドックス）。"}, {"id": "kutta", "level": "advanced", "name": "クッタ・ジューコフスキーの定理", "formula": "L′ = ρUΓ", "idea": "循環 Γ を持つ物体には、単位幅あたり ρUΓ の揚力が流れに垂直に働く。回転円柱（マグヌス効果）や翼の揚力の原理。"}, {"id": "potential", "level": "advanced", "name": "速度ポテンシャル・流れ関数と重ね合わせ", "formula": "u = ∂ψ/∂y, v = −∂ψ/∂x,  ψ_一様 = Uy, ψ_湧き出し = mθ/(2π)", "idea": "非回転・非圧縮の流れはラプラス方程式を満たすので、一様流・湧き出し・吸い込み・渦を足し合わせて複雑な流れを作れる。ψ 一定の線が流線。"}, {"id": "boundary", "level": "advanced", "name": "境界層（ブラジウスの解）", "formula": "δ ≈ 5.0x/√Re_x,  C_f = 1.328/√Re_L", "idea": "粘性の影響は物体表面近くの薄い層に限られる。層流境界層の厚さは √x に比例して下流ほど厚くなる。"}, {"id": "navierstokes", "level": "advanced", "name": "ナビエ・ストークス方程式", "formula": "ρ(∂u/∂t + u·∇u) = −∇p + μ∇²u + ρg", "idea": "粘性流体の運動方程式。平行平板間など単純な場合は厳密解が得られ、一般の場合は数値計算で解く（Re によりカルマン渦などが現れる）。"}, {"id": "dimensional", "level": "advanced", "name": "次元解析（バッキンガムの π 定理）と相似則", "formula": "変数 n 個・基本次元 k 個 ⇒ 無次元数 n − k 個", "idea": "物理量の関係は無次元数どうしの関係で書ける。模型実験ではレイノルズ数などをそろえれば実物と相似な流れになる。"}], "problems": [{"id": "B1", "level": "beginner", "sim": "hydrostatic", "title": "ダム壁面にかかる全圧力", "question": "水深 5 m の貯水池に、幅 2 m・高さ 5 m の鉛直な長方形の水門がある（水門の上端は水面と一致）。(1) 水門下端でのゲージ圧 p、(2) 水門が受ける全圧力 F、(3) 圧力中心（作用点）の水面からの深さ h_P を求めよ。", "steps": ["(1) 静水圧の式 p = ρgh に h = 5 m を代入：p = 1000 × 9.81 × 5 = 49 050 Pa", "(2) 平面壁の全圧力は「図心の圧力 × 面積」。図心の深さ h_G = 5/2 = 2.5 m、面積 A = 2 × 5 = 10 m²", "F = ρg h_G A = 1000 × 9.81 × 2.5 × 10 = 245 250 N", "(3) 圧力中心 h_P = h_G + I_G /(h_G A)。長方形の図心まわりの断面二次モーメント I_G = b h³/12 = 2 × 5³/12 = 20.83 m⁴", "h_P = 2.5 + 20.83/(2.5 × 10) = 2.5 + 0.833 = 3.33 m（水面から高さの 2/3 の位置）"], "answer": "(1) p ≈ 49.1 kPa　(2) F ≈ 245 kN　(3) h_P ≈ 3.33 m", "point": "圧力は深さに比例して三角形に分布するので、合力の作用点は図心（中央）より深い 2/3 の位置になる。"}, {"id": "B2", "level": "beginner", "sim": "pascal", "title": "油圧ジャッキ", "question": "直径 2 cm の小ピストンと直径 20 cm の大ピストンが油でつながった油圧ジャッキがある。(1) 小ピストンを 100 N で押すと、大ピストンが持ち上げる力 F₂ はいくらか。(2) 小ピストンを 10 cm 押し込むと、大ピストンは何 mm 上がるか。（ピストンの高さの差は無視）", "steps": ["(1) パスカルの原理より、両ピストンの圧力は等しい：F₁/A₁ = F₂/A₂", "F₂ = F₁ × A₂/A₁ = F₁ × (d₂/d₁)² = 100 × (20/2)² = 100 × 100 = 10 000 N", "(2) 油の体積は変わらない（連続の式）：A₁ x₁ = A₂ x₂", "x₂ = x₁ × A₁/A₂ = 10 cm × 1/100 = 0.1 cm = 1 mm"], "answer": "(1) F₂ = 10 kN　(2) 1 mm", "point": "力は面積比倍になるが、移動距離は面積比分の 1 になる。仕事 F × x は両側で同じ（エネルギー保存）。"}, {"id": "B3", "level": "beginner", "sim": "buoyancy", "title": "水に浮かぶ木片", "question": "一辺 10 cm、密度 600 kg/m³ の木の立方体を水に浮かべる。(1) 水面下に沈む深さ d、(2) 立方体を完全に水中に沈めておくために上から加える力 F を求めよ。", "steps": ["(1) 浮いている ⇒ 浮力 = 重力。ρ_水 g (a² d) = ρ_木 g a³", "d = (ρ_木/ρ_水) a = (600/1000) × 10 cm = 6 cm", "(2) 全没時の浮力 F_B = ρ_水 g a³ = 1000 × 9.81 × 0.001 = 9.81 N、重力 W = 600 × 9.81 × 0.001 = 5.886 N", "必要な力 F = F_B − W = 9.81 − 5.886 = 3.92 N"], "answer": "(1) d = 6 cm　(2) F ≈ 3.92 N", "point": "浮いている物体の「沈む割合」は密度比 ρ_物体/ρ_流体 そのもの（氷山の約 9 割が水中にあるのと同じ理屈）。"}, {"id": "B4", "level": "beginner", "sim": "continuity", "title": "管の断面積と流速", "question": "内径 10 cm の管が内径 5 cm の管に絞られている。太い管での平均流速が 2 m/s のとき、(1) 体積流量 Q、(2) 細い管での平均流速 v₂ を求めよ。", "steps": ["(1) Q = A₁ v₁ = (π/4) d₁² v₁ = (π/4) × 0.1² × 2 = 0.01571 m³/s", "(2) 連続の式 A₁v₁ = A₂v₂ より v₂ = v₁ (d₁/d₂)²", "v₂ = 2 × (10/5)² = 2 × 4 = 8 m/s"], "answer": "(1) Q ≈ 1.57 × 10⁻² m³/s（15.7 L/s）　(2) v₂ = 8 m/s", "point": "直径が半分になると断面積は 1/4、流速は 4 倍。直径の比の 2 乗で効く。"}, {"id": "B5", "level": "beginner", "sim": "torricelli", "title": "タンクの小孔からの噴出", "question": "大きな水槽の水面から深さ 1.8 m の側壁に直径 2 cm の小孔がある。(1) 流出速度 v、(2) 流量 Q（縮流は無視）、(3) 小孔が床から 0.8 m の高さにあるとき、噴流が床に達する水平距離 x を求めよ。", "steps": ["(1) 水面（p=0, v≈0, 高さ h）と孔（p=0, 速度 v, 高さ 0）にベルヌーイの定理を適用：ρgh = ½ρv²", "v = √(2gh) = √(2 × 9.81 × 1.8) = 5.94 m/s", "(2) Q = (π/4) d² v = (π/4) × 0.02² × 5.94 = 1.87 × 10⁻³ m³/s", "(3) 水平投射：落下時間 t = √(2H/g) = √(2 × 0.8/9.81) = 0.404 s", "x = v t = 5.94 × 0.404 = 2.40 m（一般に x = 2√(hH)）"], "answer": "(1) v ≈ 5.94 m/s　(2) Q ≈ 1.87 L/s　(3) x ≈ 2.40 m", "point": "x = 2√(hH) なので、孔の高さを変えると h + H 一定のもとで h = H（中間の高さ）のとき最も遠くまで飛ぶ。"}, {"id": "B6", "level": "beginner", "sim": "venturi", "title": "ベンチュリ管とピトー管", "question": "(1) 入口内径 10 cm、のど部内径 5 cm の水平なベンチュリ管に水が流れ、入口とのど部の圧力差が 15 kPa であった。入口流速 v₁ と流量 Q を求めよ。(2) 別の水流にピトー管を入れたところ、全圧と静圧の水柱の差が 20 cm であった。流速 v を求めよ。", "steps": ["(1) ベルヌーイ（水平）：p₁ − p₂ = ½ρ(v₂² − v₁²)", "連続の式：v₂ = v₁ (d₁/d₂)² = 4v₁ なので v₂² − v₁² = 15 v₁²", "15 000 = ½ × 1000 × 15 v₁² ⇒ v₁² = 2 ⇒ v₁ = 1.41 m/s", "Q = (π/4) × 0.1² × 1.41 = 0.0111 m³/s", "(2) ピトー管の先端はよどみ点（v=0）。p_全 − p_静 = ½ρv² = ρg Δh", "v = √(2gΔh) = √(2 × 9.81 × 0.2) = 1.98 m/s"], "answer": "(1) v₁ ≈ 1.41 m/s、Q ≈ 11.1 L/s　(2) v ≈ 1.98 m/s", "point": "ベンチュリ管は「狭い所は速い（連続）→ 速い所は圧力が低い（ベルヌーイ）」の 2 段構え。圧力差から流量が測れる。"}, {"id": "M1", "level": "intermediate", "sim": "momentum", "title": "噴流が平板に及ぼす力", "question": "直径 5 cm、速度 20 m/s の水の噴流が、噴流に垂直に置かれた平板に当たり、板に沿って直角に流れ去る。(1) 板が静止しているときに板が受ける力 F、(2) 板が噴流と同じ向きに 5 m/s で動いているときの力 F′ を求めよ。", "steps": ["噴流の断面積 A = (π/4) × 0.05² = 1.963 × 10⁻³ m²、流量 Q = Av = 0.0393 m³/s", "(1) 噴流方向の運動量の法則：流入運動量 ρQv、流出は板に沿う方向なので噴流方向成分 0", "F = ρQv = ρAv² = 1000 × 1.963 × 10⁻³ × 20² = 785 N", "(2) 板と一緒に動く座標で考えると、相対速度 v − u = 15 m/s で当たり、単位時間に板へ届く流量も A(v − u)", "F′ = ρA(v − u)² = 1000 × 1.963 × 10⁻³ × 15² = 442 N"], "answer": "(1) F ≈ 785 N　(2) F′ ≈ 442 N", "point": "力 = (単位時間に失われる運動量)。動く板では「相対速度」で考えるのが鉄則。"}, {"id": "M2", "level": "intermediate", "sim": "reynolds", "title": "レイノルズ数による流れの判定", "question": "内径 2 cm の円管に水（動粘性係数 ν = 1.0 × 10⁻⁶ m²/s）が流れている。(1) 平均流速 0.1 m/s と 0.5 m/s のときのレイノルズ数を求め、層流か乱流か判定せよ。(2) 臨界レイノルズ数を 2300 とするとき、臨界流速を求めよ。", "steps": ["Re = vd/ν", "(1) v = 0.1 m/s：Re = 0.1 × 0.02 / 10⁻⁶ = 2000 < 2300 ⇒ 層流", "v = 0.5 m/s：Re = 0.5 × 0.02 / 10⁻⁶ = 10 000 > 2300 ⇒ 乱流", "(2) v_c = Re_c ν / d = 2300 × 10⁻⁶ / 0.02 = 0.115 m/s"], "answer": "(1) Re = 2000（層流）、Re = 10 000（乱流）　(2) v_c ≈ 0.115 m/s", "point": "Re は「慣性力 ÷ 粘性力」。同じ管でも速さが少し上がるだけで乱流になる。"}, {"id": "M3", "level": "intermediate", "sim": "poiseuille", "title": "細管を流れる油（ハーゲン・ポアズイユ）", "question": "内径 1 cm、長さ 10 m の水平円管に、粘性係数 μ = 0.1 Pa·s、密度 900 kg/m³ の油を流量 1.0 × 10⁻⁵ m³/s で流す。(1) 必要な圧力差 Δp、(2) 平均流速と最大流速、(3) レイノルズ数を求め、層流の仮定が妥当か確かめよ。", "steps": ["(1) Δp = 128μLQ/(πd⁴) = 128 × 0.1 × 10 × 10⁻⁵ / (π × 0.01⁴)", "= 1.28 × 10⁻³ / 3.142 × 10⁻⁸ = 4.07 × 10⁴ Pa", "(2) 平均流速 v̄ = Q/A = 10⁻⁵ / (π/4 × 0.01²) = 0.127 m/s", "放物線分布 u(r) = u_max(1 − r²/R²) より u_max = 2v̄ = 0.255 m/s", "(3) Re = ρv̄d/μ = 900 × 0.127 × 0.01 / 0.1 = 11.5 ≪ 2300 ⇒ 層流で妥当"], "answer": "(1) Δp ≈ 40.7 kPa　(2) v̄ ≈ 0.127 m/s、u_max ≈ 0.255 m/s　(3) Re ≈ 11.5（層流）", "point": "Q ∝ d⁴：直径を 2 倍にすると同じ圧力差で流量は 16 倍。血管の太さが血流に大きく効く理由。"}, {"id": "M4", "level": "intermediate", "sim": "couette", "title": "平板間の油膜のせん断（クエット流れ）", "question": "すき間 2 mm の 2 枚の平行平板の間に粘性係数 μ = 0.05 Pa·s の油が満たされている。下板を固定し、面積 0.5 m² の上板を 1 m/s で平行に動かす。速度分布を直線とみなして、(1) せん断応力 τ、(2) 必要な力 F、(3) 必要な動力 P を求めよ。", "steps": ["速度分布 u(y) = U y/h なので du/dy = U/h = 1 / 0.002 = 500 s⁻¹", "(1) τ = μ du/dy = 0.05 × 500 = 25 Pa", "(2) F = τA = 25 × 0.5 = 12.5 N", "(3) P = FU = 12.5 × 1 = 12.5 W"], "answer": "(1) τ = 25 Pa　(2) F = 12.5 N　(3) P = 12.5 W", "point": "すき間が狭いほど速度勾配が大きく、抵抗が大きい。すべり軸受けの摩擦の基本。"}, {"id": "M5", "level": "intermediate", "sim": "darcy", "title": "長い水道管の摩擦損失とポンプ動力", "question": "内径 10 cm、長さ 200 m の水平な管に水が平均流速 2 m/s で流れる。管摩擦係数 f = 0.02 とする。(1) 損失ヘッド h_f、(2) 圧力損失 Δp、(3) この損失を補うポンプ動力（効率 100%）を求めよ。", "steps": ["Re = vd/ν = 2 × 0.1 / 10⁻⁶ = 2 × 10⁵ ⇒ 乱流（f は表やムーディ線図から）", "(1) h_f = f (L/d) v²/(2g) = 0.02 × (200/0.1) × 2²/(2 × 9.81) = 8.15 m", "(2) Δp = ρg h_f = 1000 × 9.81 × 8.15 = 8.0 × 10⁴ Pa", "(3) Q = (π/4) × 0.1² × 2 = 0.0157 m³/s", "P = ρg Q h_f = 1000 × 9.81 × 0.0157 × 8.15 = 1.26 × 10³ W"], "answer": "(1) h_f ≈ 8.15 m　(2) Δp ≈ 80 kPa　(3) P ≈ 1.26 kW", "point": "損失は v² に比例するので、流速を 2 倍にすると損失は 4 倍、動力は 8 倍になる。"}, {"id": "M6", "level": "intermediate", "sim": "stokes", "title": "水中を沈む砂粒の終端速度", "question": "直径 0.1 mm、密度 2650 kg/m³ の砂粒が静止した水（μ = 1.0 × 10⁻³ Pa·s）中を沈降する。(1) ストークスの法則を用いて終端速度 v_t を求めよ。(2) レイノルズ数を求め、ストークスの法則が使えるか確かめよ。", "steps": ["終端状態：重力 − 浮力 = 抵抗 ⇒ (ρ_s − ρ)g (π/6)d³ = 3πμd v_t", "v_t = (ρ_s − ρ) g d² / (18μ) = 1650 × 9.81 × (10⁻⁴)² / (18 × 10⁻³)", "= 8.99 × 10⁻³ m/s ≈ 9.0 mm/s", "(2) Re = ρv_t d/μ = 1000 × 0.009 × 10⁻⁴ / 10⁻³ = 0.90 < 1 ⇒ 適用可"], "answer": "(1) v_t ≈ 9.0 mm/s　(2) Re ≈ 0.9（ストークス域）", "point": "v_t ∝ d²：粒径が 10 倍になると沈降速度は 100 倍。沈殿池の設計に使う。"}, {"id": "A1", "level": "advanced", "sim": "cylinder", "title": "円柱まわりの圧力分布", "question": "空気（ρ = 1.2 kg/m³）の一様流 U = 10 m/s 中に半径 0.5 m の円柱がある。ポテンシャル流として、(1) 円柱表面の速度分布、(2) 表面の最大流速とその位置、(3) その位置での圧力 p − p∞、(4) 円柱に働く抵抗を求めよ。", "steps": ["複素ポテンシャル W = U(z + a²/z)。表面 r = a で u_r = 0、u_θ = −2U sinθ", "(2) |u_θ| の最大は θ = ±90°（円柱の真上・真下）で 2U = 20 m/s。θ = 0°, 180° はよどみ点", "(3) ベルヌーイより C_p = (p − p∞)/(½ρU²) = 1 − 4sin²θ。θ = 90° で C_p = −3", "p − p∞ = ½ × 1.2 × 10² × (−3) = −180 Pa", "(4) C_p は θ と 180° − θ で等しい（前後対称）ので、圧力を積分すると抵抗 D = 0（ダランベールのパラドックス）"], "answer": "(1) u_θ = −2U sinθ　(2) 20 m/s（θ = ±90°）　(3) −180 Pa　(4) D = 0", "point": "現実には境界層がはく離して後方の圧力が回復せず抵抗が生じる。ポテンシャル流は粘性を無視した理想化。"}, {"id": "A2", "level": "advanced", "sim": "cylinder", "title": "回転円柱の揚力（クッタ・ジューコフスキー）", "question": "A1 の円柱が回転し、循環 Γ = 20 m²/s が生じている（時計回り）。(1) 単位長さあたりの揚力 L′、(2) よどみ点の位置 θ_s を求めよ。(3) よどみ点が円柱表面から離れるのは Γ がいくら以上のときか。", "steps": ["(1) クッタ・ジューコフスキーの定理：L′ = ρUΓ = 1.2 × 10 × 20 = 240 N/m", "(2) 表面速度 u_θ = −2U sinθ − Γ/(2πa) = 0 より sinθ_s = −Γ/(4πaU)", "Γ/(4πaU) = 20 / (4π × 0.5 × 10) = 0.318 ⇒ θ_s = −18.6° と 198.6°（下側に移動）", "(3) |sinθ_s| ≤ 1 が必要なので Γ ≥ 4πaU = 62.8 m²/s でよどみ点は円柱から離れる"], "answer": "(1) L′ = 240 N/m　(2) θ_s ≈ −18.6°, 198.6°　(3) Γ ≥ 62.8 m²/s", "point": "揚力は循環に比例し、物体の形によらない。野球のカーブボール（マグヌス効果）も同じ原理。"}, {"id": "A3", "level": "advanced", "sim": "potential", "title": "一様流 + 湧き出し（ランキンの半無限物体）", "question": "一様流 U = 5 m/s と、原点に強さ m = 10 m²/s の湧き出しを重ねた 2 次元ポテンシャル流を考える。(1) 流れ関数 ψ を書け。(2) よどみ点の位置を求めよ。(3) 物体の形を表す流線と、下流十分遠方での物体の幅を求めよ。", "steps": ["(1) ψ = Uy + (m/2π)θ = U r sinθ + (m/2π)θ", "(2) x 軸上の速度 u = U + m/(2πx) = 0 ⇒ x_s = −m/(2πU) = −10/(2π × 5) = −0.318 m", "(3) よどみ点（θ = π）を通る流線 ψ = m/2 が物体表面", "x → ∞ で θ → 0 または 2π、y → ±m/(2U) なので幅 = m/U = 10/5 = 2 m"], "answer": "(1) ψ = Uy + mθ/(2π)　(2) (−0.318 m, 0)　(3) ψ = m/2、幅 2 m", "point": "湧き出しの流量 m が一様流 U で下流に運ばれ、幅 m/U の領域を占める（連続の式と一致）。"}, {"id": "A4", "level": "advanced", "sim": "boundary", "title": "平板の層流境界層", "question": "空気（ν = 1.5 × 10⁻⁵ m²/s、ρ = 1.2 kg/m³）の一様流 U = 5 m/s に平行に、長さ 1 m・幅 0.5 m の薄い平板を置く。(1) 後端でのレイノルズ数、(2) 後端での境界層厚さ δ、(3) 片面の摩擦抵抗 D を求めよ（ブラジウスの解を用いる）。", "steps": ["(1) Re_L = UL/ν = 5 × 1 / 1.5 × 10⁻⁵ = 3.33 × 10⁵ < 5 × 10⁵ ⇒ 全長で層流", "(2) δ = 5.0 L/√Re_L = 5.0 / 577 = 8.66 × 10⁻³ m", "(3) 平均摩擦係数 C_f = 1.328/√Re_L = 1.328 / 577 = 2.30 × 10⁻³", "D = ½ρU² C_f (L × b) = 0.5 × 1.2 × 25 × 2.30 × 10⁻³ × 0.5 = 0.0173 N"], "answer": "(1) Re_L ≈ 3.3 × 10⁵（層流）　(2) δ ≈ 8.7 mm　(3) D ≈ 0.017 N", "point": "δ ∝ √x：境界層は前縁から放物線状に厚くなる。長さ 1 m でも厚さは 1 cm 未満と薄い。"}, {"id": "A5", "level": "advanced", "sim": "couette", "title": "ナビエ・ストークス方程式の厳密解（平行平板間の流れ）", "question": "間隔 H = 1 mm の静止した 2 枚の平行平板間を、水（μ = 1.0 × 10⁻³ Pa·s）が圧力勾配 −dp/dx = 1000 Pa/m で十分発達した層流として流れる。(1) ナビエ・ストークス方程式から速度分布を導け。(2) 最大流速、(3) 平均流速と単位幅あたりの流量、(4) 壁面せん断応力を求めよ。", "steps": ["(1) 定常・x 方向のみ u(y)・発達流 ⇒ 慣性項 0。NS 方程式は 0 = −dp/dx + μ d²u/dy²", "2 回積分し u(0) = u(H) = 0 を使うと u(y) = (1/2μ)(−dp/dx) y(H − y)", "(2) y = H/2 で最大：u_max = (−dp/dx)H²/(8μ) = 1000 × 10⁻⁶ / (8 × 10⁻³) = 0.125 m/s", "(3) 放物線の平均は最大の 2/3：ū = 0.0833 m/s、q = ūH = 8.33 × 10⁻⁵ m²/s", "(4) τ_w = μ du/dy|_{y=0} = (−dp/dx)H/2 = 1000 × 10⁻³ / 2 = 0.5 Pa"], "answer": "(2) u_max = 0.125 m/s　(3) ū ≈ 0.083 m/s、q ≈ 8.3 × 10⁻⁵ m²/s　(4) τ_w = 0.5 Pa", "point": "NS 方程式も「力のつり合い」に帰着する問題は手で解ける。圧力の押す力と壁の粘性力がつり合う。"}, {"id": "A6", "level": "advanced", "sim": "dimensional", "title": "相似則による模型実験", "question": "長さ 4 m の自動車が空気中（ν = 1.5 × 10⁻⁵ m²/s、ρ = 1.2 kg/m³）を 30 m/s で走るときの抵抗を、1/5 模型を水槽（ν = 1.0 × 10⁻⁶ m²/s、ρ = 1000 kg/m³）で測って予測する。(1) 抵抗 F が ρ, v, L, μ で決まるとして π 定理で無次元数を作れ。(2) 力学的相似に必要な模型の速度、(3) 模型の抵抗が 1300 N のとき実物の抵抗を求めよ。", "steps": ["(1) 変数 F, ρ, v, L, μ の 5 個、基本次元 M, L, T の 3 個 ⇒ 無次元数 2 個", "π₁ = F/(ρv²L²)（抵抗係数）、π₂ = ρvL/μ = vL/ν（レイノルズ数）、π₁ = φ(π₂)", "(2) Re をそろえる：v_m L_m/ν_m = v_p L_p/ν_p ⇒ v_m = 30 × 5 × (1.0 × 10⁻⁶ / 1.5 × 10⁻⁵) = 10 m/s", "(3) Re が等しいので π₁ も等しい：F_p = F_m (ρ_p/ρ_m)(v_p/v_m)²(L_p/L_m)²", "= 1300 × (1.2/1000) × 3² × 5² = 351 N"], "answer": "(1) F/(ρv²L²) = φ(Re)　(2) v_m = 10 m/s　(3) F_p ≈ 351 N", "point": "風洞で同じ空気を使うと模型速度は 150 m/s 必要になり非現実的。動粘性係数の小さい水を使うのが工夫。"}]};
+const SIM_URL = "";
+const LV = {beginner:{label:"初級",color:"var(--b)"},intermediate:{label:"中級",color:"var(--m)"},advanced:{label:"上級",color:"var(--a)"}};
+let done = {};
+try{done = JSON.parse(localStorage.getItem("fluid-done")||"{}")}catch(e){}
+const esc = s => s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+document.getElementById("const").textContent = DATA.meta.constants;
+const tabs = document.getElementById("tabs");
+function render(level){
+  [...tabs.children].forEach(b=>b.setAttribute("aria-selected", b.dataset.lv===level));
+  document.getElementById("lvdesc").textContent = DATA.meta.levels[level];
+  const thName = {};
+  DATA.theorems.forEach(t=>thName[t.id]=t.name);
+  document.getElementById("thms").innerHTML = DATA.theorems.filter(t=>t.level===level).map(t=>`
+    <article class="thm"><h3>${esc(t.name)}</h3><div class="formula">${esc(t.formula)}</div><p>${esc(t.idea)}</p></article>`).join("");
+  const ps = DATA.problems.filter(p=>p.level===level);
+  document.getElementById("probs").innerHTML = ps.map(p=>{
+    const href = SIM_URL ? `${SIM_URL}#${p.sim}` : "";
+    return `<article class="prob" id="${p.id}">
+      <div class="head"><span class="pid" style="background:${LV[level].color}">${p.id}</span><h3>${esc(p.title)}</h3></div>
+      <p class="q">${esc(p.question)}</p>
+      <div class="row">
+        <a class="simlink" ${href?`href="${href}" target="_blank" rel="noopener"`:'aria-disabled="true"'}>シミュレータ：${esc(thName[p.sim]||p.sim)}${href?" ↗":"（準備中）"}</a>
+        <label class="done"><input type="checkbox" id="chk-${p.id}" data-id="${p.id}" ${done[p.id]?"checked":""}> 解けた</label>
+      </div>
+      <details><summary>解説と答えを見る</summary>
+        <ol class="steps">${p.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+        <div class="ans">答え：${esc(p.answer)}</div>
+        <p class="point"><b>ポイント：</b>${esc(p.point)}</p>
+      </details></article>`}).join("");
+  updateProgress(ps);
+  try{localStorage.setItem("fluid-level",level)}catch(e){}
+}
+function updateProgress(ps){
+  const n = ps.filter(p=>done[p.id]).length;
+  document.getElementById("progress").textContent = `解けた問題 ${n} / ${ps.length}`;
+}
+document.getElementById("probs").addEventListener("change",e=>{
+  if(!e.target.dataset.id) return;
+  done[e.target.dataset.id] = e.target.checked;
+  try{localStorage.setItem("fluid-done",JSON.stringify(done))}catch(err){}
+  const lv = tabs.querySelector('[aria-selected="true"]').dataset.lv;
+  updateProgress(DATA.problems.filter(p=>p.level===lv));
+});
+Object.entries(LV).forEach(([k,v])=>{
+  const b=document.createElement("button");b.role="tab";b.dataset.lv=k;b.id="tab-"+k;
+  b.innerHTML=`<span class="dot" style="background:${v.color}"></span>${v.label}（${DATA.problems.filter(p=>p.level===k).length}問）`;
+  b.onclick=()=>{location.hash=k};tabs.appendChild(b);
+});
+function fromHash(){const h=location.hash.slice(1);let lv="beginner";try{lv=localStorage.getItem("fluid-level")||lv}catch(e){}
+  if(LV[h]) lv=h; render(lv);}
+window.addEventListener("hashchange",fromHash);fromHash();
+</script>

@@ -1,6 +1,6 @@
 # 流体力学シミュレータ ループ計画（全15周・1分間隔）
 
-状態: 現在の周回 = 4 （各周回の最初にこの値を+1して記録する）
+状態: 現在の周回 = 5 （各周回の最初にこの値を+1して記録する）
 
 ## 周回ごとの担当
 | 周 | 内容 |
@@ -34,3 +34,4 @@
   次元解析(バッキンガムπ) / 圧縮性(音速・マッハ数・衝撃波)
 - 周3: problems.json に初級の定理6件・問題6問(B1-B6)を作成
 - 周4: 中級(M1-M6)・上級(A1-A6)の定理12件・問題12問を追加。sim id: hydrostatic,pascal,buoyancy,continuity,torricelli,venturi,momentum,reynolds,poiseuille,couette,darcy,stokes,cylinder(kutta含む),potential,boundary,navierstokes,dimensional
+- 周5: 問題集 problems.html を公開 https://claude.ai/artifact/A5ZD1Mg8MHVt1w7cuYYznc （build.py でJSONから生成。シミュレータURL確定後に python3 build.py <URL> で再生成・再公開）
