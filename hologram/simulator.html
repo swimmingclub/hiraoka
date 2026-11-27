@@ -1,0 +1,689 @@
+<title>ホログラフィ実験台</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: 光学実験台。左に操作パネル、右に3つの「スクリーン」（縞・見える像・配置図）。2つのシミュレーターをタブで切り替える */
+:root {
+  --bg: #edf1ee;
+  --surface: #ffffff;
+  --ink: #17211b;
+  --muted: #56645c;
+  --line: #d0d9d3;
+  --accent: #0f7f3d;
+  --accent-soft: #dcefe2;
+  --screen: #040705;
+  --screen-ink: #b9e8c8;
+  --warn: #a94f16;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1210; --surface: #141b17; --ink: #e2ebe5; --muted: #95a59b; --line: #29352e;
+    --accent: #4fd283; --accent-soft: #1a3324; --screen: #000000; --screen-ink: #b9e8c8; --warn: #f09a5e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1210; --surface: #141b17; --ink: #e2ebe5; --muted: #95a59b; --line: #29352e;
+  --accent: #4fd283; --accent-soft: #1a3324; --screen: #000000; --screen-ink: #b9e8c8; --warn: #f09a5e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body);
+  font-size: 15px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+h1 { font-size: clamp(26px, 4vw, 36px); line-height: 1.25; margin: 0; font-weight: 700; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 68ch; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+.tab {
+  appearance: none; border: 0; background: none; color: var(--muted); font: inherit; font-weight: 700;
+  padding: 10px 14px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px;
+  display: flex; flex-direction: column; align-items: flex-start; line-height: 1.35;
+}
+.tab small { font-weight: 400; font-size: 12px; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab:focus-visible, button:focus-visible, input:focus-visible + span, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.scene-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.scene-row > span { font-size: 13px; color: var(--muted); }
+
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg label { position: relative; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: block; padding: 5px 11px; font-size: 13px; cursor: pointer; border-right: 1px solid var(--line); white-space: nowrap; }
+.seg label:last-child span { border-right: 0; }
+.seg input:checked + span { background: var(--accent); color: var(--surface); font-weight: 700; }
+
+.bench { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } .bench .stage { order: -1; } }
+
+.controls { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+.group { display: flex; flex-direction: column; gap: 12px; }
+.group h3 { margin: 0; font-size: 12px; letter-spacing: .08em; color: var(--muted); font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.group h3::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.ctl { display: flex; flex-direction: column; gap: 4px; }
+.ctl-head { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.ctl-head output { font-family: var(--font-mono); font-size: 13px; color: var(--accent); white-space: nowrap; }
+.ctl-note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.check input { accent-color: var(--accent); margin-top: 5px; }
+.btn {
+  appearance: none; font: inherit; font-weight: 700; border-radius: 8px; padding: 9px 14px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--surface);
+}
+.btn[aria-pressed="true"] { background: var(--surface); color: var(--accent); }
+.frozen { font-size: 13px; color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; line-height: 1.55; }
+
+.stage { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.screens { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+figure canvas { width: 100%; max-width: 100%; aspect-ratio: 1; display: block; background: var(--screen); border-radius: 8px; }
+canvas.pix { image-rendering: pixelated; }
+figcaption { font-size: 13px; line-height: 1.5; color: var(--muted); }
+figcaption b { color: var(--ink); font-weight: 700; display: block; font-size: 14px; }
+
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.readout { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.readout span { font-size: 12px; color: var(--muted); }
+.readout strong { font-family: var(--font-mono); font-weight: 500; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.readout.warn strong { color: var(--warn); }
+
+.try { background: var(--accent-soft); border-radius: var(--radius); padding: 14px 16px; }
+.try h3 { margin: 0 0 6px; font-size: 15px; }
+.try ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; }
+.try li { max-width: 72ch; }
+
+.scale-note { font-size: 13px; color: var(--muted); margin: 0; max-width: 80ch; }
+.status { font-size: 12px; color: var(--muted); font-family: var(--font-mono); min-height: 1.4em; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">λ = 532 nm · 緑色レーザー</div>
+    <h1>ホログラフィ実験台</h1>
+    <p class="lede">普通のホログラフィ（乾板に干渉縞を焼き付ける）と、電子ホログラフィ（縞を計算して SLM という液晶パネルに表示する）を、同じ被写体で比べられるシミュレーターです。縞の記録から「目で見た像」まで、光の波を FFT で実際に計算しています。</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-film" aria-selected="true" aria-controls="panel-film">普通のホログラフィ<small>乾板に記録する</small></button>
+    <button class="tab" role="tab" id="tab-slm" aria-selected="false" aria-controls="panel-slm">電子ホログラフィ<small>計算して SLM に表示する</small></button>
+  </div>
+
+  <div class="scene-row">
+    <span>被写体</span>
+    <div class="seg" role="radiogroup" aria-label="被写体">
+      <label><input type="radio" name="scene" id="scene-cube" value="cube" checked><span>立方体</span></label>
+      <label><input type="radio" name="scene" id="scene-ring" value="ring"><span>リングと十字</span></label>
+      <label><input type="radio" name="scene" id="scene-helix" value="helix"><span>らせん</span></label>
+      <label><input type="radio" name="scene" id="scene-three" value="three"><span>手前・中・奥</span></label>
+    </div>
+  </div>
+
+  <!-- ===================== 普通のホログラフィ ===================== -->
+  <section id="panel-film" role="tabpanel" aria-labelledby="tab-film" class="bench">
+    <div class="controls">
+      <div class="group">
+        <h3>① 記録するとき</h3>
+        <div class="ctl">
+          <div class="ctl-head"><label for="f-theta">参照光の角度</label><output id="f-theta-o"></output></div>
+          <input type="range" id="f-theta" min="0" max="15" step="1" value="13">
+          <div class="ctl-note">乾板にまっすぐではなく斜めに当てる光。角度をつけると、余計な光が像から離れます。</div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label for="f-vib">撮影中のゆれ</label><output id="f-vib-o"></output></div>
+          <input type="range" id="f-vib" min="0" max="0.6" step="0.02" value="0">
+          <div class="ctl-note">露光している間に被写体が動いた距離（波長の何倍か）。</div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label for="f-exp">露光量</label><output id="f-exp-o"></output></div>
+          <input type="range" id="f-exp" min="0.2" max="3" step="0.1" value="1">
+          <div class="ctl-note">1 が適正。多すぎると縞が真っ黒に飽和します。</div>
+        </div>
+      </div>
+      <div class="group">
+        <h3>② 光を当てて見るとき</h3>
+        <div class="ctl">
+          <div class="ctl-head"><label for="f-view">見る位置（左右）</label><output id="f-view-o"></output></div>
+          <input type="range" id="f-view" min="-0.17" max="0.17" step="0.005" value="0">
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label for="f-focus">目のピント</label><output id="f-focus-o"></output></div>
+          <input type="range" id="f-focus" min="0.9" max="1.6" step="0.01" value="1.25">
+        </div>
+      </div>
+      <div class="frozen">乾板は記録した瞬間で固定されます。像を動かすには、別の乾板に撮り直すしかありません。</div>
+    </div>
+
+    <div class="stage">
+      <div class="screens">
+        <figure>
+          <canvas id="f-fringe" class="pix" width="256" height="256" aria-label="現像した乾板の干渉縞"></canvas>
+          <figcaption><b>現像した乾板（拡大）</b>0.128 mm 角の範囲。縞の細かさは 1 µm 単位。</figcaption>
+        </figure>
+        <figure>
+          <canvas id="f-eye" width="320" height="320" aria-label="目で見た像"></canvas>
+          <figcaption><b>目で見た像</b>乾板のうしろに浮かぶ立体像を、瞳（直径 0.16 mm）を通して見た様子。</figcaption>
+        </figure>
+        <figure>
+          <canvas id="f-diag" width="320" height="320" aria-label="上から見た配置図"></canvas>
+          <figcaption><b>上から見た配置図</b>緑の扇は、各点の光が乾板のどこまで届くか（記録できる範囲）。</figcaption>
+        </figure>
+      </div>
+      <div class="readouts">
+        <div class="readout"><span>見える角度の範囲（視域）</span><strong id="f-r-zone"></strong></div>
+        <div class="readout"><span>実物の乾板なら</span><strong>ほぼ全方向</strong></div>
+        <div class="readout" id="f-r-v-box"><span>縞のくっきり度 V</span><strong id="f-r-v"></strong></div>
+        <div class="readout"><span>計算時間</span><strong id="f-r-time"></strong></div>
+      </div>
+      <div class="try">
+        <h3>試してみる</h3>
+        <ul>
+          <li>「見る位置」を左右に動かすと、手前と奥の位置関係が変わります（視差）。最初の質問の「見る向きで中の物の向きが変わる」仕組みです。</li>
+          <li>「撮影中のゆれ」を 0.5λ（約 270 nm）にすると、縞が消えて像が見えなくなります。除振台が必要な理由です。</li>
+          <li>「参照光の角度」を 0° にすると、直進する光のにじみと、反対側にできる像（共役像）が重なります。</li>
+          <li>「露光量」を 3 にすると、縞が飽和して余計なノイズが出ます。</li>
+        </ul>
+      </div>
+      <div class="status" id="f-status"></div>
+    </div>
+  </section>
+
+  <!-- ===================== 電子ホログラフィ ===================== -->
+  <section id="panel-slm" role="tabpanel" aria-labelledby="tab-slm" class="bench" hidden>
+    <div class="controls">
+      <div class="group">
+        <h3>① 表示するパネル（SLM）</h3>
+        <div class="ctl">
+          <div class="ctl-head"><span>画素ピッチ</span><output id="s-pitch-o"></output></div>
+          <div class="seg" role="radiogroup" aria-label="画素ピッチ">
+            <label><input type="radio" name="pitch" id="pitch-1" value="1"><span>1 µm</span></label>
+            <label><input type="radio" name="pitch" id="pitch-2" value="2" checked><span>2</span></label>
+            <label><input type="radio" name="pitch" id="pitch-4" value="4"><span>4</span></label>
+            <label><input type="radio" name="pitch" id="pitch-8" value="8"><span>8</span></label>
+            <label><input type="radio" name="pitch" id="pitch-16" value="16"><span>16</span></label>
+          </div>
+          <div class="ctl-note">市販の SLM は 4〜8 µm 程度。1 µm は乾板に近い理想のパネル。</div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><span>変調方式</span></div>
+          <div class="seg" role="radiogroup" aria-label="変調方式">
+            <label><input type="radio" name="mode" id="mode-phase" value="phase" checked><span>位相型</span></label>
+            <label><input type="radio" name="mode" id="mode-amp" value="amp"><span>振幅型</span></label>
+          </div>
+          <div class="ctl-note">位相型は光を遅らせるだけで明るい。振幅型は乾板と同じく明暗の縞。</div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><span>階調</span></div>
+          <div class="seg" role="radiogroup" aria-label="階調">
+            <label><input type="radio" name="bits" id="bits-1" value="1"><span>1 bit</span></label>
+            <label><input type="radio" name="bits" id="bits-2" value="2"><span>2</span></label>
+            <label><input type="radio" name="bits" id="bits-4" value="4"><span>4</span></label>
+            <label><input type="radio" name="bits" id="bits-8" value="8" checked><span>8</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="group">
+        <h3>② 縞の計算</h3>
+        <label class="check"><input type="checkbox" id="s-band" checked><span>帯域制限<br><span class="ctl-note">パネルで表せない細かい縞は計算しない。外すとゴースト像が出ます。</span></span></label>
+      </div>
+      <div class="group">
+        <h3>③ 見るとき</h3>
+        <div class="ctl">
+          <div class="ctl-head"><label for="s-view">見る位置（左右）</label><output id="s-view-o"></output></div>
+          <input type="range" id="s-view" min="-0.17" max="0.17" step="0.005" value="0">
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label for="s-focus">目のピント</label><output id="s-focus-o"></output></div>
+          <input type="range" id="s-focus" min="0.9" max="1.6" step="0.01" value="1.25">
+        </div>
+        <button class="btn" id="s-anim" aria-pressed="false">被写体を回転させる</button>
+        <div class="ctl-note">1 フレームごとに縞を計算し直して表示します。乾板にはできない、電子ホログラフィだけの動きです。</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="screens">
+        <figure>
+          <canvas id="s-fringe" class="pix" width="256" height="256" aria-label="SLM に表示した縞"></canvas>
+          <figcaption><b>SLM に表示した縞（拡大）</b>乾板と同じ 0.128 mm 角の範囲。四角いブロックが 1 画素。</figcaption>
+        </figure>
+        <figure>
+          <canvas id="s-eye" width="320" height="320" aria-label="目で見た像"></canvas>
+          <figcaption><b>目で見た像</b>SLM にレーザーを当て、瞳を通して見た様子。</figcaption>
+        </figure>
+        <figure>
+          <canvas id="s-diag" width="320" height="320" aria-label="上から見た配置図"></canvas>
+          <figcaption><b>上から見た配置図</b>扇が細いほど、その点が見える目の位置は狭くなります。</figcaption>
+        </figure>
+      </div>
+      <div class="readouts">
+        <div class="readout"><span>見える角度の範囲（視域）</span><strong id="s-r-zone"></strong></div>
+        <div class="readout"><span>10 cm 角の画面に必要な画素</span><strong id="s-r-pix"></strong></div>
+        <div class="readout"><span>縞を表示する画素（この模型）</span><strong id="s-r-model"></strong></div>
+        <div class="readout"><span>計算時間 / 1 フレーム</span><strong id="s-r-time"></strong></div>
+      </div>
+      <div class="try">
+        <h3>試してみる</h3>
+        <ul>
+          <li>画素ピッチを 2 → 4 → 8 µm と粗くしていくと、像がノイズで崩れ、8 µm では立方体の端の点から見えなくなります。配置図の扇が細くなり、瞳に届かない点が出るためです。今の市販の SLM では、この大きさの被写体はまだ表示しきれません。</li>
+          <li>8 µm で「見る位置」を動かすと、見える点が入れ替わります。視域が狭いので、少し動くだけで見えるものが変わります。</li>
+          <li>帯域制限を外すと、本来ない位置にゴースト像が出ます（エイリアシング）。</li>
+          <li>16 µm の位相型では、中央に明るい輪が出ます。光が届かない部分の位相がそろってしまい、まっすぐ進む光（0 次光）になったものです。</li>
+          <li>階調を 1 bit にすると、縞が白黒の 2 値になってノイズが増えます。</li>
+          <li>像の上下左右に出る薄いコピーは、画素の格子による「高次の回折像」です。画素ピッチ 1 µm では見えなくなります。</li>
+          <li>「被写体を回転させる」で、動くホログラムになります。</li>
+        </ul>
+      </div>
+      <div class="status" id="s-status"></div>
+    </div>
+  </section>
+
+  <p class="scale-note">計算を軽くするため、ホログラムは 0.512 mm 角（512 × 512 点）、被写体は 1〜1.6 mm 奥にある縮小模型です。比率は実物と同じなので、視域や縞の細かさの関係はそのまま当てはまります。このシミュレーションの格子は 1 µm なので、乾板の視域は ±15° で頭打ちになります。実物の乾板は 0.2 µm 程度まで記録できるため、ほぼ全方向から見えます。</p>
+</div>
+
+<script>
+"use strict";
+// ---------------- 物理定数とグリッド ----------------
+const N = 512, DX = 1e-6, LAM = 532e-9, K = 2 * Math.PI / LAM;
+const PUPIL_R = 80;            // 瞳の半径 [格子点] = 0.08 mm
+const CROP = 320;              // 目の像として表示する範囲 [FFT のビン]
+const ZC = 1.25e-3;            // 被写体の中心の奥行き
+const mm = v => v * 1e-3;
+
+// ---------------- FFT（基数 2） ----------------
+const LOGN = Math.log2(N);
+const rev = new Uint32Array(N);
+for (let i = 0; i < N; i++) { let r = 0; for (let b = 0; b < LOGN; b++) r |= ((i >> b) & 1) << (LOGN - 1 - b); rev[i] = r; }
+const cosT = new Float64Array(N / 2), sinT = new Float64Array(N / 2);
+for (let i = 0; i < N / 2; i++) { cosT[i] = Math.cos(2 * Math.PI * i / N); sinT[i] = -Math.sin(2 * Math.PI * i / N); }
+function fft1(re, im) {
+  for (let i = 0; i < N; i++) { const j = rev[i]; if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+  for (let size = 2; size <= N; size <<= 1) {
+    const half = size >> 1, step = N / size;
+    for (let i = 0; i < N; i += size) {
+      for (let j = 0; j < half; j++) {
+        const k = j * step, wr = cosT[k], wi = sinT[k], a = i + j, b = a + half;
+        const tr = re[b] * wr - im[b] * wi, ti = re[b] * wi + im[b] * wr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+      }
+    }
+  }
+}
+const tr1 = new Float64Array(N), ti1 = new Float64Array(N);
+function fft2(re, im) {
+  for (let r = 0; r < N; r++) {
+    const o = r * N;
+    for (let c = 0; c < N; c++) { tr1[c] = re[o + c]; ti1[c] = im[o + c]; }
+    fft1(tr1, ti1);
+    for (let c = 0; c < N; c++) { re[o + c] = tr1[c]; im[o + c] = ti1[c]; }
+  }
+  for (let c = 0; c < N; c++) {
+    for (let r = 0; r < N; r++) { tr1[r] = re[r * N + c]; ti1[r] = im[r * N + c]; }
+    fft1(tr1, ti1);
+    for (let r = 0; r < N; r++) { re[r * N + c] = tr1[r]; im[r * N + c] = ti1[r]; }
+  }
+}
+
+// ---------------- 被写体（点の集まり） ----------------
+function makeScene(name) {
+  const p = [];
+  if (name === "cube") {
+    const h = mm(0.1), n = 5;
+    const corners = [];
+    for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) corners.push([sx, sy, sz]);
+    const seen = new Set();
+    for (let a = 0; a < 8; a++) for (let b = a + 1; b < 8; b++) {
+      const A = corners[a], B = corners[b];
+      const diff = A.filter((v, i) => v !== B[i]).length;
+      if (diff !== 1) continue;
+      for (let s = 0; s <= n; s++) {
+        const t = s / n;
+        const x = (A[0] + (B[0] - A[0]) * t) * h, y = (A[1] + (B[1] - A[1]) * t) * h, z = ZC + (A[2] + (B[2] - A[2]) * t) * h;
+        const key = [x, y, z].map(v => Math.round(v * 1e7)).join(",");
+        if (!seen.has(key)) { seen.add(key); p.push({ x, y, z }); }
+      }
+    }
+  } else if (name === "ring") {
+    for (let i = 0; i < 24; i++) { const t = i / 24 * 2 * Math.PI; p.push({ x: mm(0.08) * Math.cos(t), y: mm(0.08) * Math.sin(t), z: mm(1.0) }); }
+    for (let s = -5; s <= 5; s++) {
+      p.push({ x: mm(0.02) * s, y: 0, z: mm(1.5) });
+      if (s !== 0) p.push({ x: 0, y: mm(0.02) * s, z: mm(1.5) });
+    }
+  } else if (name === "helix") {
+    for (let i = 0; i < 44; i++) { const t = i / 44; const a = t * 4 * Math.PI; p.push({ x: mm(0.08) * Math.cos(a), y: mm(0.16) * (t - 0.5) * 1.2, z: mm(1.0) + mm(0.5) * (0.5 + 0.5 * Math.sin(a)) }); }
+  } else { // three
+    const plus = (cx, z) => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([a, b]) => p.push({ x: cx + mm(0.018) * a, y: mm(0.018) * b, z }));
+    const cross = (cx, z) => [[0, 0], [1, 1], [-1, -1], [1, -1], [-1, 1]].forEach(([a, b]) => p.push({ x: cx + mm(0.015) * a, y: mm(0.015) * b, z }));
+    const ring = (cx, z) => { for (let i = 0; i < 8; i++) { const t = i / 8 * 2 * Math.PI; p.push({ x: cx + mm(0.022) * Math.cos(t), y: mm(0.022) * Math.sin(t), z }); } };
+    plus(mm(-0.07), mm(1.0)); cross(0, ZC); ring(mm(0.07), mm(1.5));
+  }
+  p.forEach((q, i) => { q.ph = ((Math.sin(i * 12.9898 + 4.1) * 43758.5453) % 1 + 1) % 1 * 2 * Math.PI; });
+  return p;
+}
+function rotateScene(pts, ang) {
+  const c = Math.cos(ang), s = Math.sin(ang);
+  return pts.map(q => ({ x: q.x * c + (q.z - ZC) * s, y: q.y, z: ZC - q.x * s + (q.z - ZC) * c, ph: q.ph }));
+}
+
+// ---------------- 物体光：各点から出た球面波をホログラム面で足し合わせる ----------------
+// フレネル近似 exp(ik r) ≈ exp(ik z) exp(ik (dx²+dy²)/2z) を使い、x と y に分けて高速に計算する
+function objectField(pts, M, pitch, bandlimit) {
+  const re = new Float64Array(M * M), im = new Float64Array(M * M);
+  const c = new Float64Array(M);
+  for (let j = 0; j < M; j++) c[j] = (j + 0.5) * pitch - N * DX / 2;
+  const exr = new Float64Array(M), exi = new Float64Array(M), eyr = new Float64Array(M), eyi = new Float64Array(M);
+  for (const q of pts) {
+    const L = bandlimit ? LAM * q.z / (2 * pitch) : Infinity;
+    const a = ZC / q.z, ph = K * q.z + q.ph, cr = a * Math.cos(ph), ci = a * Math.sin(ph);
+    let x0 = M, x1 = -1;
+    for (let j = 0; j < M; j++) {
+      const dx = c[j] - q.x;
+      if (Math.abs(dx) <= L) { const f = K * dx * dx / (2 * q.z); exr[j] = Math.cos(f); exi[j] = Math.sin(f); if (j < x0) x0 = j; x1 = j; }
+      else { exr[j] = 0; exi[j] = 0; }
+      const dy = c[j] - q.y;
+      if (Math.abs(dy) <= L) { const f = K * dy * dy / (2 * q.z); eyr[j] = Math.cos(f); eyi[j] = Math.sin(f); }
+      else { eyr[j] = 0; eyi[j] = 0; }
+    }
+    if (x1 < 0) continue;
+    for (let y = 0; y < M; y++) {
+      if (eyr[y] === 0 && eyi[y] === 0) continue;
+      const yr = cr * eyr[y] - ci * eyi[y], yi = cr * eyi[y] + ci * eyr[y], row = y * M;
+      for (let x = x0; x <= x1; x++) {
+        re[row + x] += yr * exr[x] - yi * exi[x];
+        im[row + x] += yr * exi[x] + yi * exr[x];
+      }
+    }
+  }
+  return { re, im, c };
+}
+
+// ---------------- 目で見る：瞳で切り取り、目のレンズでピントを合わせ、網膜（角度）の像にする ----------------
+const coordFull = new Float64Array(N);
+for (let j = 0; j < N; j++) coordFull[j] = (j + 0.5) * DX - N * DX / 2;
+const Wre = new Float64Array(N * N), Wim = new Float64Array(N * N);
+function eyeView(Ure, Uim, xv, zf) {
+  Wre.fill(0); Wim.fill(0);
+  const cx = Math.round(N / 2 + xv / DX), cy = N / 2;
+  for (let y = cy - PUPIL_R; y < cy + PUPIL_R; y++) {
+    if (y < 0 || y >= N) continue;
+    const yy = coordFull[y];
+    for (let x = cx - PUPIL_R; x < cx + PUPIL_R; x++) {
+      if (x < 0 || x >= N) continue;
+      const dxp = x - cx + 0.5, dyp = y - cy + 0.5;
+      if (dxp * dxp + dyp * dyp > PUPIL_R * PUPIL_R) continue;
+      const xx = coordFull[x], d = xx - xv;
+      const psi = -K * (d * d + yy * yy) / (2 * zf) - K * xx * xv / zf;
+      const cr = Math.cos(psi), ci = Math.sin(psi), i = y * N + x;
+      Wre[i] = Ure[i] * cr - Uim[i] * ci;
+      Wim[i] = Ure[i] * ci + Uim[i] * cr;
+    }
+  }
+  fft2(Wre, Wim);
+  const out = new Float64Array(CROP * CROP);
+  let mx = 0;
+  for (let r = 0; r < CROP; r++) {
+    const fy = ((CROP / 2 - r) % N + N) % N;          // 上下を反転して、見た目どおりの向きにする
+    for (let col = 0; col < CROP; col++) {
+      const fx = ((CROP / 2 - col) % N + N) % N;      // 左右も反転
+      const i = fy * N + fx, v = Wre[i] * Wre[i] + Wim[i] * Wim[i];
+      out[r * CROP + col] = v; if (v > mx) mx = v;
+    }
+  }
+  return { img: out, max: mx };
+}
+
+// ---------------- 描画 ----------------
+function drawEye(canvas, img, ref) {
+  const ctx = canvas.getContext("2d"), id = ctx.createImageData(CROP, CROP), d = id.data;
+  for (let i = 0; i < CROP * CROP; i++) {
+    const g = Math.sqrt(Math.min(1, img[i] / ref));
+    d[i * 4] = 255 * Math.max(0, g - 0.65) / 0.35 * 0.85;
+    d[i * 4 + 1] = 255 * Math.min(1, g * 1.2);
+    d[i * 4 + 2] = 255 * Math.max(0, g - 0.75) / 0.25 * 0.6;
+    d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(id, 0, 0);
+}
+function drawGray(canvas, getVal) {           // 中央 128 × 128 格子点（0.128 mm 角）を 2 倍で表示
+  const ctx = canvas.getContext("2d"), id = ctx.createImageData(256, 256), d = id.data;
+  const o = N / 2 - 64;
+  for (let r = 0; r < 256; r++) for (let c = 0; c < 256; c++) {
+    const v = Math.max(0, Math.min(1, getVal(o + (r >> 1), o + (c >> 1)))) * 255, i = (r * 256 + c) * 4;
+    d[i] = v * 0.86; d[i + 1] = v; d[i + 2] = v * 0.9; d[i + 3] = 255;
+  }
+  ctx.putImageData(id, 0, 0);
+}
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function drawDiagram(canvas, pts, thetaMax, xv, plateLabel) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1), S = 320;
+  if (canvas.width !== S * dpr) { canvas.width = S * dpr; canvas.height = S * dpr; }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const ink = cssVar("--screen-ink");
+  ctx.fillStyle = cssVar("--screen"); ctx.fillRect(0, 0, S, S);
+  const plateX = 70, zs = 235 / mm(1.7), xs = 150 / mm(0.3), cy = 160;
+  const X = z => plateX + z * zs, Y = x => cy + x * xs;
+  const half = N * DX / 2, Lt = Math.tan(thetaMax);
+  // 各点の光が届く範囲（扇）
+  for (const q of pts) {
+    const L = q.z * Lt, a = Math.max(-half, q.x - L), b = Math.min(half, q.x + L);
+    if (a >= b) continue;
+    ctx.beginPath(); ctx.moveTo(X(q.z), Y(q.x)); ctx.lineTo(plateX, Y(a)); ctx.lineTo(plateX, Y(b)); ctx.closePath();
+    ctx.fillStyle = "rgba(60, 220, 120, 0.035)"; ctx.fill();
+  }
+  // 乾板 / SLM
+  ctx.strokeStyle = ink; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(plateX, Y(-half)); ctx.lineTo(plateX, Y(half)); ctx.stroke();
+  // 瞳
+  const w = PUPIL_R * DX;
+  ctx.strokeStyle = "#ffd166"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(plateX - 4, Y(xv - w)); ctx.lineTo(plateX - 4, Y(xv + w)); ctx.stroke();
+  ctx.fillStyle = "#ffd166"; ctx.beginPath(); ctx.ellipse(32, Y(xv), 13, 8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = cssVar("--screen"); ctx.beginPath(); ctx.arc(37, Y(xv), 4, 0, Math.PI * 2); ctx.fill();
+  // 点（見えるものは明るく）
+  for (const q of pts) {
+    const L = q.z * Lt, vis = Math.abs(q.x - xv) <= L + w;
+    ctx.beginPath(); ctx.arc(X(q.z), Y(q.x), 2.6, 0, Math.PI * 2);
+    if (vis) { ctx.fillStyle = "#5dff9a"; ctx.fill(); } else { ctx.strokeStyle = "rgba(185, 232, 200, 0.45)"; ctx.lineWidth = 1; ctx.stroke(); }
+  }
+  ctx.fillStyle = ink; ctx.font = "12px " + cssVar("--font-body");
+  ctx.fillText(plateLabel, plateX - 20, 22);
+  ctx.fillText("目", 24, Y(xv) - 14);
+  ctx.fillText("被写体", X(ZC) - 18, 22);
+  ctx.fillText("奥行き →", 230, 308);
+  ctx.globalAlpha = 0.6; ctx.fillText("● 見える点   ○ 見えない点", 12, 308); ctx.globalAlpha = 1;
+}
+
+// ---------------- 共有の状態 ----------------
+let sceneName = "cube";
+let basePts = makeScene(sceneName);
+const deg = r => r * 180 / Math.PI;
+const fmt = (v, d) => v.toFixed(d);
+function $(id) { return document.getElementById(id); }
+
+// 乾板の粒状ノイズ（固定）
+const grain = new Float32Array(N * N);
+{ let s = 12345; const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+  for (let i = 0; i < N * N; i++) { const u = rnd() || 1e-9, v = rnd(); grain[i] = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); } }
+
+// =====================================================================
+// 普通のホログラフィ
+// =====================================================================
+const film = { U: null, T: null, baseMax: 1, dirty: true };
+function filmParams() {
+  return { theta: +$("f-theta").value * Math.PI / 180, vib: +$("f-vib").value, expo: +$("f-exp").value, xv: mm(+$("f-view").value), zf: mm(+$("f-focus").value) };
+}
+function filmRecord(p) {
+  const t0 = performance.now();
+  const O = objectField(basePts, N, DX, true);
+  let mO = 0; for (let i = 0; i < N * N; i++) mO += O.re[i] * O.re[i] + O.im[i] * O.im[i]; mO /= N * N;
+  const Ar = Math.sqrt(4 * mO), Emean = mO + Ar * Ar;
+  const Delta = 4 * Math.PI * p.vib;                 // 反射なので往復で位相は 2 倍
+  const V = Delta === 0 ? 1 : Math.abs(Math.sin(Delta / 2) / (Delta / 2));
+  const s = Math.sin(p.theta), Rr = new Float64Array(N), Ri = new Float64Array(N);
+  for (let x = 0; x < N; x++) { const f = K * s * coordFull[x]; Rr[x] = Math.cos(f); Ri[x] = Math.sin(f); }
+  const T = new Float32Array(N * N), Ure = new Float64Array(N * N), Uim = new Float64Array(N * N);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const i = y * N + x, or = O.re[i], oi = O.im[i];
+    const E = or * or + oi * oi + Ar * Ar + 2 * V * Ar * (or * Rr[x] + oi * Ri[x]);
+    let t = 1 - p.expo * 0.5 * E / Emean + 0.02 * grain[i];
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    T[i] = t; Ure[i] = t * Rr[x]; Uim[i] = t * Ri[x];   // 現像した乾板に、同じ参照光を当てる
+  }
+  film.U = { re: Ure, im: Uim }; film.T = T; film.V = V;
+  film.base = eyeView(Ure, Uim, 0, p.zf).max;
+  film.recordMs = performance.now() - t0;
+}
+function filmUpdate(full) {
+  const p = filmParams();
+  $("f-theta-o").textContent = fmt(deg(p.theta), 0) + "°";
+  $("f-vib-o").textContent = fmt(p.vib, 2) + " λ（" + Math.round(p.vib * 532) + " nm）";
+  $("f-exp-o").textContent = "× " + fmt(p.expo, 1);
+  $("f-view-o").textContent = fmt(p.xv * 1e3, 3) + " mm（" + fmt(deg(Math.atan(p.xv / ZC)), 1) + "°）";
+  $("f-focus-o").textContent = fmt(p.zf * 1e3, 2) + " mm 奥";
+  const t0 = performance.now();
+  if (full || !film.U) { filmRecord(p); film.zf = p.zf; }
+  else if (film.zf !== p.zf) { film.base = eyeView(film.U.re, film.U.im, 0, p.zf).max; film.zf = p.zf; }
+  const v = eyeView(film.U.re, film.U.im, p.xv, p.zf);
+  drawEye($("f-eye"), v.img, Math.max(v.max, 0.2 * film.base));
+  drawGray($("f-fringe"), (r, c) => film.T[r * N + c]);
+  drawDiagram($("f-diag"), basePts, Math.asin(LAM / (2 * DX)), p.xv, "乾板");
+  $("f-r-zone").textContent = "±" + fmt(deg(Math.asin(LAM / (2 * DX))), 1) + "°";
+  $("f-r-v").textContent = fmt(film.V, 2) + (film.V < 0.3 ? "（ほぼ消える）" : film.V < 0.8 ? "（暗くなる）" : "");
+  $("f-r-v-box").classList.toggle("warn", film.V < 0.8);
+  $("f-r-time").textContent = Math.round(performance.now() - t0) + " ms";
+}
+
+// =====================================================================
+// 電子ホログラフィ
+// =====================================================================
+const slm = { anim: false, angle: 0, base: 1 };
+function radioVal(name) { return document.querySelector('input[name="' + name + '"]:checked').value; }
+function slmParams() {
+  return { s: +radioVal("pitch"), mode: radioVal("mode"), bits: +radioVal("bits"), band: $("s-band").checked,
+           xv: mm(+$("s-view").value), zf: mm(+$("s-focus").value) };
+}
+function slmCompute(p, pts) {
+  const s = p.s, pitch = s * DX, M = N / s, levels = 1 << p.bits;
+  const O = objectField(pts, M, pitch, p.band);
+  const disp = new Float32Array(M * M);            // SLM の各画素の値（0〜1）
+  const Ure = new Float64Array(N * N), Uim = new Float64Array(N * N);
+  if (p.mode === "phase") {
+    // 位相型：物体光の位相だけを取り出し、階調数に丸める（キノフォーム）
+    const pr = new Float64Array(M * M), pi = new Float64Array(M * M);
+    for (let i = 0; i < M * M; i++) {
+      let ph = Math.atan2(O.im[i], O.re[i]); if (ph < 0) ph += 2 * Math.PI;
+      const q = Math.round(ph / (2 * Math.PI) * levels) % levels, phq = q / levels * 2 * Math.PI;
+      disp[i] = levels > 1 ? q / (levels - 1) : 0; pr[i] = Math.cos(phq); pi[i] = Math.sin(phq);
+    }
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const j = (y / s | 0) * M + (x / s | 0), i = y * N + x; Ure[i] = pr[j]; Uim[i] = pi[j]; }
+  } else {
+    // 振幅型：斜めの参照光との干渉縞を計算して、明るさの階調に丸める
+    const sc = LAM / (4 * pitch);                  // 表せる縞の半分の細かさになる角度
+    let mO = 0; for (let i = 0; i < M * M; i++) mO += O.re[i] * O.re[i] + O.im[i] * O.im[i]; mO /= M * M;
+    const Ar = Math.sqrt(mO), Emean = 2 * mO;
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) {
+      const f = K * sc * O.c[x], i = y * M + x;
+      const rr = Ar * Math.cos(f), ri = Ar * Math.sin(f);
+      const er = O.re[i] + rr, ei = O.im[i] + ri;
+      const t = Math.min(1, (er * er + ei * ei) / (2 * Emean));
+      disp[i] = Math.round(t * (levels - 1)) / (levels - 1);
+    }
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const j = (y / s | 0) * M + (x / s | 0), i = y * N + x, f = K * sc * coordFull[x];
+      Ure[i] = disp[j] * Math.cos(f); Uim[i] = disp[j] * Math.sin(f);
+    }
+  }
+  return { U: { re: Ure, im: Uim }, disp, M };
+}
+function slmUpdate(full) {
+  const p = slmParams();
+  const pitch = p.s * DX, thetaMax = Math.asin(Math.min(1, LAM / (2 * pitch)));
+  $("s-pitch-o").textContent = p.s + " µm";
+  $("s-view-o").textContent = fmt(p.xv * 1e3, 3) + " mm（" + fmt(deg(Math.atan(p.xv / ZC)), 1) + "°）";
+  $("s-focus-o").textContent = fmt(p.zf * 1e3, 2) + " mm 奥";
+  const t0 = performance.now();
+  const pts = slm.angle ? rotateScene(basePts, slm.angle) : basePts;
+  if (full || !slm.res || slm.anim) {
+    slm.res = slmCompute(p, pts);
+    if (!slm.anim) slm.base = eyeView(slm.res.U.re, slm.res.U.im, 0, p.zf).max;
+  }
+  const v = eyeView(slm.res.U.re, slm.res.U.im, p.xv, p.zf);
+  if (slm.anim) slm.base = Math.max(v.max, slm.base * 0.97);
+  drawEye($("s-eye"), v.img, Math.max(v.max, 0.2 * slm.base));
+  const { disp, M } = slm.res, s = p.s;
+  drawGray($("s-fringe"), (r, c) => disp[(r / s | 0) * M + (c / s | 0)]);
+  drawDiagram($("s-diag"), pts, thetaMax, p.xv, "SLM");
+  const ms = performance.now() - t0;
+  $("s-r-zone").textContent = "±" + fmt(deg(thetaMax), 1) + "°";
+  const side = Math.round(0.1 / pitch);
+  const total = side * side;
+  $("s-r-pix").textContent = side.toLocaleString("ja-JP") + "² ≈ " + (total >= 1e8 ? fmt(total / 1e8, 1) + " 億" : fmt(total / 1e4, 0) + " 万") + "画素";
+  $("s-r-model").textContent = M + " × " + M;
+  $("s-r-time").textContent = Math.round(ms) + " ms" + (slm.anim ? "（" + fmt(1000 / ms, 1) + " fps）" : "");
+}
+function animLoop() {
+  if (!slm.anim) return;
+  slm.angle += 0.05;
+  slmUpdate(true);
+  requestAnimationFrame(animLoop);
+}
+
+// ---------------- イベント ----------------
+let pending = {};
+function schedule(which, full) {
+  pending[which] = !!pending[which] || full;
+  if (pending._raf) return;
+  pending._raf = requestAnimationFrame(() => {
+    const f = pending.film, s = pending.slm; pending = {};
+    $("f-status").textContent = ""; $("s-status").textContent = "";
+    if (f !== undefined && !$("panel-film").hidden) filmUpdate(f);
+    if (s !== undefined && !$("panel-slm").hidden && !slm.anim) slmUpdate(s);
+  });
+}
+["f-theta", "f-vib", "f-exp"].forEach(id => $(id).addEventListener("input", () => schedule("film", true)));
+["f-view", "f-focus"].forEach(id => $(id).addEventListener("input", () => schedule("film", false)));
+document.querySelectorAll('input[name="pitch"], input[name="mode"], input[name="bits"], #s-band').forEach(el => el.addEventListener("change", () => schedule("slm", true)));
+$("s-view").addEventListener("input", () => schedule("slm", false));
+$("s-focus").addEventListener("input", () => schedule("slm", true));
+document.querySelectorAll('input[name="scene"]').forEach(el => el.addEventListener("change", () => {
+  sceneName = el.value; basePts = makeScene(sceneName); slm.angle = 0;
+  const zs = basePts.map(q => q.z), zmid = (Math.min(...zs) + Math.max(...zs)) / 2;
+  $("f-focus").value = $("s-focus").value = (zmid * 1e3).toFixed(2);
+  film.U = null; slm.res = null;
+  schedule("film", true); schedule("slm", true);
+}));
+$("s-anim").addEventListener("click", () => {
+  slm.anim = !slm.anim;
+  $("s-anim").setAttribute("aria-pressed", String(slm.anim));
+  $("s-anim").textContent = slm.anim ? "回転を止める" : "被写体を回転させる";
+  if (slm.anim) requestAnimationFrame(animLoop); else schedule("slm", true);
+});
+function selectTab(which) {
+  const isFilm = which === "film";
+  $("tab-film").setAttribute("aria-selected", String(isFilm));
+  $("tab-slm").setAttribute("aria-selected", String(!isFilm));
+  $("panel-film").hidden = !isFilm; $("panel-slm").hidden = isFilm;
+  if (!isFilm) { schedule("slm", !slm.res); }
+  else { if (slm.anim) $("s-anim").click(); schedule("film", !film.U); }
+}
+$("tab-film").addEventListener("click", () => selectTab("film"));
+$("tab-slm").addEventListener("click", () => selectTab("slm"));
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { schedule("film", false); schedule("slm", false); });
+
+$("f-status").textContent = "計算中…";
+schedule("film", true);
+</script>
